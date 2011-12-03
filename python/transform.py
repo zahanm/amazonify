@@ -7,8 +7,12 @@ import sys
 
 def run(raw_metadata_file):
   with gzip.open(raw_metadata_file) as raw_metadata:
-    for i in xrange(40):
-      print(next(raw_metadata).strip())
+    lines = 0
+    try:
+      while raw_metadata:
+        line = raw_metadata.next()
+    except StopIteration:
+      print('All done')
 
 if __name__ == '__main__':
   if len(sys.argv) == 2:
