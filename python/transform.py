@@ -22,17 +22,23 @@ date_re = re.compile( r'\b(?P<date>\d{4}-\d{1,2}-\d{1,2})\b' )
 pair_re = re.compile( r'\b(?P<prefix>[\w]+)\s*:\s*(?P<suffix>[\w]+)\b' )
 
 def run(raw_metadata_file, json_output_file):
-  with gzip.open(raw_metadata_file) as raw_metadata, gzip.open(json_output_file, 'w') as json_output:
+  with gzip.open(raw_metadata_file) as raw_metadata, gzip.open(json_output_file, 'wb') as json_output:
     try:
+      item_num = 0
       while raw_metadata:
         prefix, _, suffix = raw_metadata.next().partition(':')
         if 'Id' in prefix:
           # item object
           item = {}
           item['id'] = suffix.strip()
+          item_num += 1
           parse_item(raw_metadata, item, json_output)
+          if item_num % 10000 == 0:
+            print('', item_num, sep='\n')
+          elif item_num % 100 == 0:
+            print('.', end='')
     except StopIteration:
-      pass
+      print('All done')
 
 def parse_item(raw_metadata, item, json_output):
   while raw_metadata:
@@ -81,7 +87,7 @@ def parse_reviews(raw_metadata, item, meta):
 
 if __name__ == '__main__':
   if len(sys.argv) == 3:
-    run(sys.argv[1], sys.argv[1])
+    run(sys.argv[1], sys.argv[2])
   else:
     print('usage: {0} <input file name> <output file name>'.format(__file__))
 
