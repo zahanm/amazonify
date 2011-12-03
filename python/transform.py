@@ -6,6 +6,15 @@ import gzip
 import sys
 import re
 
+'''
+Convert from the stupid Amazon format to json_value
+To use with MRJob
+
+Dependencies:
+- Python 2.7 (multiple with context managers)
+
+'''
+
 # globals
 simple_types = frozenset(('asin', 'title', 'group', 'salesrank'))
 cat_re = re.compile( r'\[(?P<id>\d+)\]' )
