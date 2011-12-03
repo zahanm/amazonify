@@ -38,8 +38,6 @@ def run(raw_metadata_file, json_output_file):
             print('', item_num, sep='\n')
           elif item_num % 100 == 0:
             print('.', end='')
-          elif item_num >= 100:
-            raise StopIteration
     except StopIteration:
       print('All done')
 
