@@ -4,19 +4,77 @@ from __future__ import print_function
 import json
 import gzip
 import sys
+import re
 
-def run(raw_metadata_file):
-  with gzip.open(raw_metadata_file) as raw_metadata:
-    lines = 0
+# globals
+simple_types = frozenset(('asin', 'title', 'group', 'salesrank'))
+cat_re = re.compile( r'\[(?P<id>\d+)\]' )
+date_re = re.compile( r'\b(?P<date>\d{4}-\d{1,2}-\d{1,2})\b' )
+pair_re = re.compile( r'\b(?P<prefix>[\w]+)\s*:\s*(?P<suffix>[\w]+)\b' )
+
+def run(raw_metadata_file, json_output_file):
+  with gzip.open(raw_metadata_file) as raw_metadata, gzip.open(json_output_file, 'w') as json_output:
     try:
       while raw_metadata:
-        line = raw_metadata.next()
+        prefix, _, suffix = raw_metadata.next().partition(':')
+        if 'Id' in prefix:
+          # item object
+          item = {}
+          item['id'] = suffix.strip()
+          parse_item(raw_metadata, item, json_output)
     except StopIteration:
-      print('All done')
+      pass
+
+def parse_item(raw_metadata, item, json_output):
+  while raw_metadata:
+    prefix, _, suffix = raw_metadata.next().partition(':')
+    prefix = prefix.strip().lower()
+    if prefix in simple_types:
+      item[prefix] = suffix.strip()
+    elif prefix == 'similar':
+      item[prefix] = map(lambda s: s.strip(), suffix.split()[1:])
+    elif prefix == 'categories':
+      item[prefix] = []
+      parse_categories(raw_metadata, item, int(suffix))
+    elif prefix == 'reviews':
+      parse_reviews(raw_metadata, item, suffix)
+    else:
+      break
+  json.dump(item, json_output)
+  json_output.write('\n')
+
+def parse_categories(raw_metadata, item, num):
+  for i in xrange(num):
+    category_line = raw_metadata.next()
+    cat_list = []
+    for cat in cat_re.finditer( category_line ):
+      cat_list.append(cat.group('id'))
+    item['categories'].append(cat_list)
+
+def parse_reviews(raw_metadata, item, meta):
+  item['review_info'] = {}
+  reviews = []
+  for p in pair_re.finditer(meta):
+    if p.group('prefix') == 'total':
+      item['review_info']['total'] = int(p.group('suffix'))
+    elif p.group('prefix') == 'rating':
+      item['review_info']['avg'] = float(p.group('suffix'))
+  item['review_info']['reviews'] = []
+  for i in xrange(item['review_info']['total']):
+    review_line = raw_metadata.next()
+    review = {}
+    for p in pair_re.finditer(review_line):
+      if p.group('prefix') == 'cutomer': # this is not a typo. I'm entirely serious.
+        review['customer'] = p.group('suffix').strip()
+      else:
+        review[p.group('prefix')] = int(p.group('suffix'))
+    item['review_info']['reviews'].append(review)
 
 if __name__ == '__main__':
-  if len(sys.argv) == 2:
-    run(sys.argv[1])
+  if len(sys.argv) == 3:
+    run(sys.argv[1], sys.argv[1])
+  else:
+    print('usage: {0} <input file name> <output file name>'.format(__file__))
 
 
 """
