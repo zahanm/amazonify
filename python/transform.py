@@ -39,7 +39,7 @@ def run(raw_metadata_file, json_output_file):
           elif item_num % 100 == 0:
             print('.', end='')
     except StopIteration:
-      print('All done')
+      print('', 'All done', sep='\n')
 
 def parse_item(raw_metadata, item, json_output):
   while raw_metadata:
