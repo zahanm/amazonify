@@ -17,9 +17,10 @@ Dependencies:
 
 # globals
 simple_types = frozenset(('asin', 'title', 'group', 'salesrank'))
+num_types = frozenset(('rating', 'votes', 'helpful'))
 cat_re = re.compile( r'\[(?P<id>\d+)\]' )
-date_re = re.compile( r'\b(?P<date>\d{4}-\d{1,2}-\d{1,2})\b' )
-pair_re = re.compile( r'\b(?P<prefix>[\w]+)\s*:\s*(?P<suffix>[\w]+)\b' )
+# cutomer is not a typo. I'm entirely serious. Go Amazon!
+review_re = re.compile( r'\s*[\d-]+\s+cutomer\s*:\s*(?P<customer>\w+)\s+rating\s*:\s*(?P<rating>\d+)\s+votes\s*:\s*(?P<votes>\d+)\s+helpful\s*:\s*(?P<helpful>\d+)\s*' )
 
 def run(raw_metadata_file, json_output_file):
   with gzip.open(raw_metadata_file) as raw_metadata, gzip.open(json_output_file, 'wb') as json_output:
@@ -37,6 +38,8 @@ def run(raw_metadata_file, json_output_file):
             print('', item_num, sep='\n')
           elif item_num % 100 == 0:
             print('.', end='')
+          elif item_num >= 100:
+            raise StopIteration
     except StopIteration:
       print('All done')
 
@@ -49,16 +52,17 @@ def parse_item(raw_metadata, item, json_output):
     elif prefix == 'similar':
       item[prefix] = map(lambda s: s.strip(), suffix.split()[1:])
     elif prefix == 'categories':
-      item[prefix] = []
       parse_categories(raw_metadata, item, int(suffix))
     elif prefix == 'reviews':
       parse_reviews(raw_metadata, item, suffix)
+      break
     else:
       break
   json.dump(item, json_output)
   json_output.write('\n')
 
 def parse_categories(raw_metadata, item, num):
+  item['categories'] = []
   for i in xrange(num):
     category_line = raw_metadata.next()
     cat_list = []
@@ -69,21 +73,23 @@ def parse_categories(raw_metadata, item, num):
 def parse_reviews(raw_metadata, item, meta):
   item['review_info'] = {}
   reviews = []
-  for p in pair_re.finditer(meta):
-    if p.group('prefix') == 'total':
-      item['review_info']['total'] = int(p.group('suffix'))
-    elif p.group('prefix') == 'rating':
-      item['review_info']['avg'] = float(p.group('suffix'))
   item['review_info']['reviews'] = []
-  for i in xrange(item['review_info']['total']):
-    review_line = raw_metadata.next()
-    review = {}
-    for p in pair_re.finditer(review_line):
-      if p.group('prefix') == 'cutomer': # this is not a typo. I'm entirely serious.
-        review['customer'] = p.group('suffix').strip()
-      else:
-        review[p.group('prefix')] = int(p.group('suffix'))
+  totrating = 0
+  m = review_re.match(raw_metadata.next())
+  while m:
+    review = m.groupdict()
+    review['customer'] = m.group('customer')
+    for prop in num_types:
+      review[prop] = int(m.group(prop))
+    totrating += review['rating']
     item['review_info']['reviews'].append(review)
+    m = review_re.match(raw_metadata.next())
+  # calculating these since meta information seems unreliable
+  item['review_info']['total'] = len(item['review_info']['reviews'])
+  try:
+    item['review_info']['avg'] = float(totrating) / item['review_info']['total']
+  except ZeroDivisionError:
+    item['review_info']['avg'] = 0
 
 if __name__ == '__main__':
   if len(sys.argv) == 3:
