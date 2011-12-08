@@ -1,7 +1,7 @@
 %% Load
 clear all; close all;
 LINES_TO_READ = 7593244;
-data = dlmread('review_matrix.txt', '\t', [1, 0, LINES_TO_READ, 2]);
+data = dlmread('../data/review_matrix.txt', '\t', [1, 0, LINES_TO_READ, 2]);
 % load format is product_id, user_id, rating
 
 % shift the customer index by 1 for matlab indexing
