@@ -1,6 +1,6 @@
 function rmse = neighborhood(train_matrix, test_data, k)
 
-% Neighborhood-based algorithm
+% Neighborhood-based algorithm -- leave-one-out version
 % params: 
 % k -- number of neighbors to use
 % train_matrix -- must be sparse. Rows are products, columns are users
