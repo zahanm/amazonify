@@ -18,7 +18,7 @@ test_data(:, 2) = test_data(:, 2) + 1;
 
 
 %% Run model
-rmse = neighborhood(train_matrix, test_data, 1);
+rmse = neighborhood(train_matrix, test_data, 10);
 
 % baseline comparisons
 actual_ratings = test_data(:, 3);
