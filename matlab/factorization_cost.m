@@ -1,6 +1,10 @@
 function [cost, grad] = factorization_cost(theta, num_products, num_users, ... 
     latent_size, p_ids, u_ids, ratings)
-
+    
+    % Regularization not implemented
+    % May need to scale cost and gradient by (1 / number of training
+    % examples)
+    
     % unroll parameters
     p = reshape(theta(1:num_products*latent_size), num_products, latent_size);
     u = reshape(theta(num_products*latent_size + 1: end), num_users, latent_size);
@@ -9,7 +13,7 @@ function [cost, grad] = factorization_cost(theta, num_products, num_users, ...
     w = p(p_ids, :);
     h = u(u_ids, :);
     rating_diff = ratings - sum(w .* h, 2);
-    cost = sum(rating_diff.^2)
+    cost = sum(rating_diff.^2);
         
     % gradient
     grad_p = zeros(size(p));
@@ -21,5 +25,5 @@ function [cost, grad] = factorization_cost(theta, num_products, num_users, ...
         grad_u(u_ids(i), :) = grad_u(u_ids(i), :) + delta_u(i, :);
     end
     grad = [grad_p(:); grad_u(:)];
-    norm(grad)
+    % disp(norm(grad))
 end

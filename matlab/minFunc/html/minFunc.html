@@ -1,0 +1,2363 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>minFunc</title><meta name="generator" content="MATLAB 7.10"><meta name="date" content="2011-01-07"><meta name="m-file" content="minFunc"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [x,f,exitflag,output] = minFunc(funObj,x0,options,varargin)
+<span class="comment">% minFunc(funObj,x0,options,varargin)</span>
+<span class="comment">%</span>
+<span class="comment">% Unconstrained optimizer using a line search strategy</span>
+<span class="comment">%</span>
+<span class="comment">% Uses an interface very similar to fminunc</span>
+<span class="comment">%   (it doesn't support all of the optimization toolbox options,</span>
+<span class="comment">%       but supports many other options).</span>
+<span class="comment">%</span>
+<span class="comment">% It computes descent directions using one of ('Method'):</span>
+<span class="comment">%   - 'sd': Steepest Descent</span>
+<span class="comment">%       (no previous information used, not recommended)</span>
+<span class="comment">%   - 'csd': Cyclic Steepest Descent</span>
+<span class="comment">%       (uses previous step length for a fixed length cycle)</span>
+<span class="comment">%   - 'bb': Barzilai and Borwein Gradient</span>
+<span class="comment">%       (uses only previous step)</span>
+<span class="comment">%   - 'cg': Non-Linear Conjugate Gradient</span>
+<span class="comment">%       (uses only previous step and a vector beta)</span>
+<span class="comment">%   - 'scg': Scaled Non-Linear Conjugate Gradient</span>
+<span class="comment">%       (uses previous step and a vector beta,</span>
+<span class="comment">%           and Hessian-vector products to initialize line search)</span>
+<span class="comment">%   - 'pcg': Preconditionined Non-Linear Conjugate Gradient</span>
+<span class="comment">%       (uses only previous step and a vector beta, preconditioned version)</span>
+<span class="comment">%   - 'lbfgs': Quasi-Newton with Limited-Memory BFGS Updating</span>
+<span class="comment">%       (default: uses a predetermined nunber of previous steps to form a</span>
+<span class="comment">%           low-rank Hessian approximation)</span>
+<span class="comment">%   - 'newton0': Hessian-Free Newton</span>
+<span class="comment">%       (numerically computes Hessian-Vector products)</span>
+<span class="comment">%   - 'pnewton0': Preconditioned Hessian-Free Newton</span>
+<span class="comment">%       (numerically computes Hessian-Vector products, preconditioned</span>
+<span class="comment">%       version)</span>
+<span class="comment">%   - 'qnewton': Quasi-Newton Hessian approximation</span>
+<span class="comment">%       (uses dense Hessian approximation)</span>
+<span class="comment">%   - 'mnewton': Newton's method with Hessian calculation after every</span>
+<span class="comment">%   user-specified number of iterations</span>
+<span class="comment">%       (needs user-supplied Hessian matrix)</span>
+<span class="comment">%   - 'newton': Newton's method with Hessian calculation every iteration</span>
+<span class="comment">%       (needs user-supplied Hessian matrix)</span>
+<span class="comment">%   - 'tensor': Tensor</span>
+<span class="comment">%       (needs user-supplied Hessian matrix and Tensor of 3rd partial derivatives)</span>
+<span class="comment">%</span>
+<span class="comment">% Several line search strategies are available for finding a step length satisfying</span>
+<span class="comment">%   the termination criteria ('LS'):</span>
+<span class="comment">%   - 0: Backtrack w/ Step Size Halving</span>
+<span class="comment">%   - 1: Backtrack w/ Quadratic/Cubic Interpolation from new function values</span>
+<span class="comment">%   - 2: Backtrack w/ Cubic Interpolation from new function + gradient</span>
+<span class="comment">%   values (default for 'bb' and 'sd')</span>
+<span class="comment">%   - 3: Bracketing w/ Step Size Doubling and Bisection</span>
+<span class="comment">%   - 4: Bracketing w/ Cubic Interpolation/Extrapolation with function +</span>
+<span class="comment">%   gradient values (default for all except 'bb' and 'sd')</span>
+<span class="comment">%   - 5: Bracketing w/ Mixed Quadratic/Cubic Interpolation/Extrapolation</span>
+<span class="comment">%   - 6: Use Matlab Optimization Toolbox's line search</span>
+<span class="comment">%           (requires Matlab's linesearch.m to be added to the path)</span>
+<span class="comment">%</span>
+<span class="comment">%   Above, the first three find a point satisfying the Armijo conditions,</span>
+<span class="comment">%   while the last four search for find a point satisfying the Wolfe</span>
+<span class="comment">%   conditions.  If the objective function overflows, it is recommended</span>
+<span class="comment">%   to use one of the first 3.</span>
+<span class="comment">%   The first three can be used to perform a non-monotone</span>
+<span class="comment">%   linesearch by changing the option 'Fref'.</span>
+<span class="comment">%</span>
+<span class="comment">% Several strategies for choosing the initial step size are avaiable ('LS_init'):</span>
+<span class="comment">%   - 0: Always try an initial step length of 1 (default for all except 'cg' and 'sd')</span>
+<span class="comment">%       (t = 1)</span>
+<span class="comment">%   - 1: Use a step similar to the previous step (default for 'cg' and 'sd')</span>
+<span class="comment">%       (t = t_old*min(2,g'd/g_old'd_old))</span>
+<span class="comment">%   - 2: Quadratic Initialization using previous function value and new</span>
+<span class="comment">%   function value/gradient (use this if steps tend to be very long)</span>
+<span class="comment">%       (t = min(1,2*(f-f_old)/g))</span>
+<span class="comment">%   - 3: The minimum between 1 and twice the previous step length</span>
+<span class="comment">%       (t = min(1,2*t)</span>
+<span class="comment">%   - 4: The scaled conjugate gradient step length (may accelerate</span>
+<span class="comment">%   conjugate gradient methods, but requires a Hessian-vector product)</span>
+<span class="comment">%       (t = g'd/d'Hd)</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs:</span>
+<span class="comment">%   funObj is a function handle</span>
+<span class="comment">%   x0 is a starting vector;</span>
+<span class="comment">%   options is a struct containing parameters</span>
+<span class="comment">%  (defaults are used for non-existent or blank fields)</span>
+<span class="comment">%   all other arguments are passed to funObj</span>
+<span class="comment">%</span>
+<span class="comment">% Outputs:</span>
+<span class="comment">%   x is the minimum value found</span>
+<span class="comment">%   f is the function value at the minimum found</span>
+<span class="comment">%   exitflag returns an exit condition</span>
+<span class="comment">%   output returns a structure with other information</span>
+<span class="comment">%</span>
+<span class="comment">% Supported Input Options</span>
+<span class="comment">%   Display - Level of display [ off | final | (iter) | full | excessive ]</span>
+<span class="comment">%   MaxFunEvals - Maximum number of function evaluations allowed (1000)</span>
+<span class="comment">%   MaxIter - Maximum number of iterations allowed (500)</span>
+<span class="comment">%   TolFun - Termination tolerance on the first-order optimality (1e-5)</span>
+<span class="comment">%   TolX - Termination tolerance on progress in terms of function/parameter changes (1e-9)</span>
+<span class="comment">%   Method - [ sd | csd | bb | cg | scg | pcg | {lbfgs} | newton0 | pnewton0 |</span>
+<span class="comment">%       qnewton | mnewton | newton | tensor ]</span>
+<span class="comment">%   c1 - Sufficient Decrease for Armijo condition (1e-4)</span>
+<span class="comment">%   c2 - Curvature Decrease for Wolfe conditions (.2 for cg methods, .9 otherwise)</span>
+<span class="comment">%   LS_init - Line Search Initialization -see above (2 for cg/sd, 4 for scg, 0 otherwise)</span>
+<span class="comment">%   LS - Line Search type -see above (2 for bb, 4 otherwise)</span>
+<span class="comment">%   Fref - Setting this to a positive integer greater than 1</span>
+<span class="comment">%       will use non-monotone Armijo objective in the line search.</span>
+<span class="comment">%       (20 for bb, 10 for csd, 1 for all others)</span>
+<span class="comment">%   numDiff - compute derivative numerically</span>
+<span class="comment">%       (default: 0) (this option has a different effect for 'newton', see below)</span>
+<span class="comment">%   useComplex - if 1, use complex differentials when computing numerical derivatives</span>
+<span class="comment">%       to get very accurate values (default: 0)</span>
+<span class="comment">%   DerivativeCheck - if 'on', computes derivatives numerically at initial</span>
+<span class="comment">%       point and compares to user-supplied derivative (default: 'off')</span>
+<span class="comment">%   outputFcn - function to run after each iteration (default: []).  It</span>
+<span class="comment">%       should have the following interface:</span>
+<span class="comment">%       outputFcn(x,infoStruct,state,varargin{:})</span>
+<span class="comment">%   useMex - where applicable, use mex files to speed things up (default: 1)</span>
+<span class="comment">%</span>
+<span class="comment">% Method-specific input options:</span>
+<span class="comment">%   newton:</span>
+<span class="comment">%       HessianModify - type of Hessian modification for direct solvers to</span>
+<span class="comment">%       use if the Hessian is not positive definite (default: 0)</span>
+<span class="comment">%           0: Minimum Euclidean norm s.t. eigenvalues sufficiently large</span>
+<span class="comment">%           (requires eigenvalues on iterations where matrix is not pd)</span>
+<span class="comment">%           1: Start with (1/2)*||A||_F and increment until Cholesky succeeds</span>
+<span class="comment">%           (an approximation to method 0, does not require eigenvalues)</span>
+<span class="comment">%           2: Modified LDL factorization</span>
+<span class="comment">%           (only 1 generalized Cholesky factorization done and no eigenvalues required)</span>
+<span class="comment">%           3: Modified Spectral Decomposition</span>
+<span class="comment">%           (requires eigenvalues)</span>
+<span class="comment">%           4: Modified Symmetric Indefinite Factorization</span>
+<span class="comment">%           5: Uses the eigenvector of the smallest eigenvalue as negative</span>
+<span class="comment">%           curvature direction</span>
+<span class="comment">%       cgSolve - use conjugate gradient instead of direct solver (default: 0)</span>
+<span class="comment">%           0: Direct Solver</span>
+<span class="comment">%           1: Conjugate Gradient</span>
+<span class="comment">%           2: Conjugate Gradient with Diagonal Preconditioner</span>
+<span class="comment">%           3: Conjugate Gradient with LBFGS Preconditioner</span>
+<span class="comment">%           x: Conjugate Graident with Symmetric Successive Over Relaxation</span>
+<span class="comment">%           Preconditioner with parameter x</span>
+<span class="comment">%               (where x is a real number in the range [0,2])</span>
+<span class="comment">%           x: Conjugate Gradient with Incomplete Cholesky Preconditioner</span>
+<span class="comment">%           with drop tolerance -x</span>
+<span class="comment">%               (where x is a real negative number)</span>
+<span class="comment">%       numDiff - compute Hessian numerically</span>
+<span class="comment">%                 (default: 0, done with complex differentials if useComplex = 1)</span>
+<span class="comment">%       LS_saveHessiancomp - when on, only computes the Hessian at the</span>
+<span class="comment">%       first and last iteration of the line search (default: 1)</span>
+<span class="comment">%   mnewton:</span>
+<span class="comment">%       HessianIter - number of iterations to use same Hessian (default: 5)</span>
+<span class="comment">%   qnewton:</span>
+<span class="comment">%       initialHessType - scale initial Hessian approximation (default: 1)</span>
+<span class="comment">%       qnUpdate - type of quasi-Newton update (default: 3):</span>
+<span class="comment">%           0: BFGS</span>
+<span class="comment">%           1: SR1 (when it is positive-definite, otherwise BFGS)</span>
+<span class="comment">%           2: Hoshino</span>
+<span class="comment">%           3: Self-Scaling BFGS</span>
+<span class="comment">%           4: Oren's Self-Scaling Variable Metric method</span>
+<span class="comment">%           5: McCormick-Huang asymmetric update</span>
+<span class="comment">%       Damped - use damped BFGS update (default: 1)</span>
+<span class="comment">%   newton0/pnewton0:</span>
+<span class="comment">%       HvFunc - user-supplied function that returns Hessian-vector products</span>
+<span class="comment">%           (by default, these are computed numerically using autoHv)</span>
+<span class="comment">%           HvFunc should have the following interface: HvFunc(v,x,varargin{:})</span>
+<span class="comment">%       useComplex - use a complex perturbation to get high accuracy</span>
+<span class="comment">%           Hessian-vector products (default: 0)</span>
+<span class="comment">%           (the increased accuracy can make the method much more efficient,</span>
+<span class="comment">%               but gradient code must properly support complex inputs)</span>
+<span class="comment">%       useNegCurv - a negative curvature direction is used as the descent</span>
+<span class="comment">%           direction if one is encountered during the cg iterations</span>
+<span class="comment">%           (default: 1)</span>
+<span class="comment">%       precFunc (for pnewton0 only) - user-supplied preconditioner</span>
+<span class="comment">%           (by default, an L-BFGS preconditioner is used)</span>
+<span class="comment">%           precFunc should have the following interfact:</span>
+<span class="comment">%           precFunc(v,x,varargin{:})</span>
+<span class="comment">%   lbfgs:</span>
+<span class="comment">%       Corr - number of corrections to store in memory (default: 100)</span>
+<span class="comment">%           (higher numbers converge faster but use more memory)</span>
+<span class="comment">%       Damped - use damped update (default: 0)</span>
+<span class="comment">%   pcg:</span>
+<span class="comment">%       cgUpdate - type of update (default: 2)</span>
+<span class="comment">%   cg/scg/pcg:</span>
+<span class="comment">%       cgUpdate - type of update (default for cg/scg: 2, default for pcg: 1)</span>
+<span class="comment">%           0: Fletcher Reeves</span>
+<span class="comment">%           1: Polak-Ribiere</span>
+<span class="comment">%           2: Hestenes-Stiefel (not supported for pcg)</span>
+<span class="comment">%           3: Gilbert-Nocedal</span>
+<span class="comment">%       HvFunc (for scg only)- user-supplied function that returns Hessian-vector</span>
+<span class="comment">%           products</span>
+<span class="comment">%           (by default, these are computed numerically using autoHv)</span>
+<span class="comment">%           HvFunc should have the following interface:</span>
+<span class="comment">%           HvFunc(v,x,varargin{:})</span>
+<span class="comment">%       precFunc (for pcg only) - user-supplied preconditioner</span>
+<span class="comment">%           (by default, an L-BFGS preconditioner is used)</span>
+<span class="comment">%           precFunc should have the following interfact:</span>
+<span class="comment">%           precFunc(v,x,varargin{:})</span>
+<span class="comment">%   bb:</span>
+<span class="comment">%       bbType - type of bb step (default: 1)</span>
+<span class="comment">%           0: min_alpha ||delta_x - alpha delta_g||_2</span>
+<span class="comment">%           1: min_alpha ||alpha delta_x - delta_g||_2</span>
+<span class="comment">%           2: Conic BB</span>
+<span class="comment">%           3: Gradient method with retards</span>
+<span class="comment">%   csd:</span>
+<span class="comment">%       cycle - length of cycle (default: 3)</span>
+<span class="comment">%</span>
+<span class="comment">% Supported Output Options</span>
+<span class="comment">%   iterations - number of iterations taken</span>
+<span class="comment">%   funcCount - number of function evaluations</span>
+<span class="comment">%   algorithm - algorithm used</span>
+<span class="comment">%   firstorderopt - first-order optimality</span>
+<span class="comment">%   message - exit message</span>
+<span class="comment">%   trace.funccount - function evaluations after each iteration</span>
+<span class="comment">%   trace.fval - function value after each iteration</span>
+<span class="comment">%</span>
+<span class="comment">% Author: Mark Schmidt (2006)</span>
+<span class="comment">% Web: http://www.cs.ubc.ca/~schmidtm</span>
+<span class="comment">%</span>
+<span class="comment">% Sources (in order of how much the source material contributes):</span>
+<span class="comment">%   J. Nocedal and S.J. Wright.  1999.  "Numerical Optimization".  Springer Verlag.</span>
+<span class="comment">%   R. Fletcher.  1987.  "Practical Methods of Optimization".  Wiley.</span>
+<span class="comment">%   J. Demmel.  1997.  "Applied Linear Algebra.  SIAM.</span>
+<span class="comment">%   R. Barret, M. Berry, T. Chan, J. Demmel, J. Dongarra, V. Eijkhout, R.</span>
+<span class="comment">%   Pozo, C. Romine, and H. Van der Vost.  1994.  "Templates for the Solution of</span>
+<span class="comment">%   Linear Systems: Building Blocks for Iterative Methods".  SIAM.</span>
+<span class="comment">%   J. More and D. Thuente.  "Line search algorithms with guaranteed</span>
+<span class="comment">%   sufficient decrease".  ACM Trans. Math. Softw. vol 20, 286-307, 1994.</span>
+<span class="comment">%   M. Raydan.  "The Barzilai and Borwein gradient method for the large</span>
+<span class="comment">%   scale unconstrained minimization problem".  SIAM J. Optim., 7, 26-33,</span>
+<span class="comment">%   (1997).</span>
+<span class="comment">%   "Mathematical Optimization".  The Computational Science Education</span>
+<span class="comment">%   Project.  1995.</span>
+<span class="comment">%   C. Kelley.  1999.  "Iterative Methods for Optimization".  Frontiers in</span>
+<span class="comment">%   Applied Mathematics.  SIAM.</span>
+
+<span class="keyword">if</span> nargin &lt; 3
+    options = [];
+<span class="keyword">end</span>
+
+<span class="comment">% Get Parameters</span>
+[verbose,verboseI,debug,doPlot,maxFunEvals,maxIter,tolFun,tolX,method,<span class="keyword">...</span>
+    corrections,c1,c2,LS_init,LS,cgSolve,qnUpdate,cgUpdate,initialHessType,<span class="keyword">...</span>
+    HessianModify,Fref,useComplex,numDiff,LS_saveHessianComp,<span class="keyword">...</span>
+    DerivativeCheck,Damped,HvFunc,bbType,cycle,<span class="keyword">...</span>
+    HessianIter,outputFcn,useMex,useNegCurv,precFunc] = <span class="keyword">...</span>
+    minFunc_processInputOptions(options);
+
+<span class="keyword">if</span> isfield(options, <span class="string">'logfile'</span>)
+    logfile = options.logfile;
+<span class="keyword">else</span>
+    logfile = [];
+<span class="keyword">end</span>
+
+<span class="comment">% Constants</span>
+SD = 0;
+CSD = 1;
+BB = 2;
+CG = 3;
+PCG = 4;
+LBFGS = 5;
+QNEWTON = 6;
+NEWTON0 = 7;
+NEWTON = 8;
+TENSOR = 9;
+
+<span class="comment">% Initialize</span>
+p = length(x0);
+d = zeros(p,1);
+x = x0;
+t = 1;
+
+<span class="comment">% If necessary, form numerical differentiation functions</span>
+funEvalMultiplier = 1;
+<span class="keyword">if</span> numDiff &amp;&amp; method ~= TENSOR
+    varargin(3:end+2) = varargin(1:end);
+    varargin{1} = useComplex;
+    varargin{2} = funObj;
+    <span class="keyword">if</span> method ~= NEWTON
+        <span class="keyword">if</span> debug
+            <span class="keyword">if</span> useComplex
+                fprintf(<span class="string">'Using complex differentials for gradient computation\n'</span>);
+            <span class="keyword">else</span>
+                fprintf(<span class="string">'Using finite differences for gradient computation\n'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        funObj = @autoGrad;
+    <span class="keyword">else</span>
+        <span class="keyword">if</span> debug
+            <span class="keyword">if</span> useComplex
+                fprintf(<span class="string">'Using complex differentials for gradient computation\n'</span>);
+            <span class="keyword">else</span>
+                fprintf(<span class="string">'Using finite differences for gradient computation\n'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        funObj = @autoHess;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> method == NEWTON0 &amp;&amp; useComplex == 1
+        <span class="keyword">if</span> debug
+            fprintf(<span class="string">'Turning off the use of complex differentials\n'</span>);
+        <span class="keyword">end</span>
+        useComplex = 0;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> useComplex
+        funEvalMultiplier = p;
+    <span class="keyword">else</span>
+        funEvalMultiplier = p+1;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Evaluate Initial Point</span>
+<span class="keyword">if</span> method &lt; NEWTON
+    [f,g] = feval(funObj, x, varargin{:});
+<span class="keyword">else</span>
+    [f,g,H] = feval(funObj, x, varargin{:});
+    computeHessian = 1;
+<span class="keyword">end</span>
+funEvals = 1;
+
+<span class="keyword">if</span> strcmp(DerivativeCheck,<span class="string">'on'</span>)
+    <span class="keyword">if</span> numDiff
+        fprintf(<span class="string">'Can not do derivative checking when numDiff is 1\n'</span>);
+    <span class="keyword">end</span>
+    <span class="comment">% Check provided gradient/hessian function using numerical derivatives</span>
+    fprintf(<span class="string">'Checking Gradient:\n'</span>);
+    [f2,g2] = autoGrad(x,useComplex,funObj,varargin{:});
+
+    fprintf(<span class="string">'Max difference between user and numerical gradient: %f\n'</span>,max(abs(g-g2)));
+    <span class="keyword">if</span> max(abs(g-g2)) &gt; 1e-4
+        fprintf(<span class="string">'User NumDif:\n'</span>);
+        [g g2]
+        diff = abs(g-g2)
+        pause;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> method &gt;= NEWTON
+        fprintf(<span class="string">'Check Hessian:\n'</span>);
+        [f2,g2,H2] = autoHess(x,useComplex,funObj,varargin{:});
+
+        fprintf(<span class="string">'Max difference between user and numerical hessian: %f\n'</span>,max(abs(H(:)-H2(:))));
+        <span class="keyword">if</span> max(abs(H(:)-H2(:))) &gt; 1e-4
+            H
+            H2
+            diff = abs(H-H2)
+            pause;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Output Log</span>
+<span class="keyword">if</span> verboseI
+    fprintf(<span class="string">'%10s %10s %15s %15s %15s\n'</span>,<span class="string">'Iteration'</span>,<span class="string">'FunEvals'</span>,<span class="string">'Step Length'</span>,<span class="string">'Function Val'</span>,<span class="string">'Opt Cond'</span>);
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> logfile
+    fid = fopen(logfile, <span class="string">'a'</span>);
+    <span class="keyword">if</span> (fid &gt; 0)
+        fprintf(fid, <span class="string">'-- %10s %10s %15s %15s %15s\n'</span>,<span class="string">'Iteration'</span>,<span class="string">'FunEvals'</span>,<span class="string">'Step Length'</span>,<span class="string">'Function Val'</span>,<span class="string">'Opt Cond'</span>);
+        fclose(fid);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Output Function</span>
+<span class="keyword">if</span> ~isempty(outputFcn)
+    callOutput(outputFcn,x,<span class="string">'init'</span>,0,funEvals,f,[],[],g,[],sum(abs(g)),varargin{:});
+<span class="keyword">end</span>
+
+<span class="comment">% Initialize Trace</span>
+trace.fval = f;
+trace.funcCount = funEvals;
+
+<span class="comment">% Check optimality of initial point</span>
+<span class="keyword">if</span> sum(abs(g)) &lt;= tolFun
+    exitflag=1;
+    msg = <span class="string">'Optimality Condition below TolFun'</span>;
+    <span class="keyword">if</span> verbose
+        fprintf(<span class="string">'%s\n'</span>,msg);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> nargout &gt; 3
+        output = struct(<span class="string">'iterations'</span>,0,<span class="string">'funcCount'</span>,1,<span class="keyword">...</span>
+            <span class="string">'algorithm'</span>,method,<span class="string">'firstorderopt'</span>,sum(abs(g)),<span class="string">'message'</span>,msg,<span class="string">'trace'</span>,trace);
+    <span class="keyword">end</span>
+    <span class="keyword">return</span>;
+<span class="keyword">end</span>
+
+<span class="comment">% Perform up to a maximum of 'maxIter' descent steps:</span>
+<span class="keyword">for</span> i = 1:maxIter
+
+    <span class="comment">% ****************** COMPUTE DESCENT DIRECTION *****************</span>
+
+    <span class="keyword">switch</span> method
+        <span class="keyword">case</span> SD <span class="comment">% Steepest Descent</span>
+            d = -g;
+
+        <span class="keyword">case</span> CSD <span class="comment">% Cyclic Steepest Descent</span>
+
+            <span class="keyword">if</span> mod(i,cycle) == 1 <span class="comment">% Use Steepest Descent</span>
+                alpha = 1;
+                LS_init = 2;
+                LS = 4; <span class="comment">% Precise Line Search</span>
+            <span class="keyword">elseif</span> mod(i,cycle) == mod(1+1,cycle) <span class="comment">% Use Previous Step</span>
+                alpha = t;
+                LS_init = 0;
+                LS = 2; <span class="comment">% Non-monotonic line search</span>
+            <span class="keyword">end</span>
+            d = -alpha*g;
+
+        <span class="keyword">case</span> BB <span class="comment">% Steepest Descent with Barzilai and Borwein Step Length</span>
+
+            <span class="keyword">if</span> i == 1
+                d = -g;
+            <span class="keyword">else</span>
+                y = g-g_old;
+                s = t*d;
+                <span class="keyword">if</span> bbType == 0
+                    yy = y'*y;
+                    alpha = (s'*y)/(yy);
+                    <span class="keyword">if</span> alpha &lt;= 1e-10 || alpha &gt; 1e10
+                        alpha = 1;
+                    <span class="keyword">end</span>
+                <span class="keyword">elseif</span> bbType == 1
+                    sy = s'*y;
+                    alpha = (s'*s)/sy;
+                    <span class="keyword">if</span> alpha &lt;= 1e-10 || alpha &gt; 1e10
+                        alpha = 1;
+                    <span class="keyword">end</span>
+                <span class="keyword">elseif</span> bbType == 2 <span class="comment">% Conic Interpolation ('Modified BB')</span>
+                    sy = s'*y;
+                    ss = s'*s;
+                    alpha = ss/sy;
+                    <span class="keyword">if</span> alpha &lt;= 1e-10 || alpha &gt; 1e10
+                        alpha = 1;
+                    <span class="keyword">end</span>
+                    alphaConic = ss/(6*(myF_old - f) + 4*g'*s + 2*g_old'*s);
+                    <span class="keyword">if</span> alphaConic &gt; .001*alpha &amp;&amp; alphaConic &lt; 1000*alpha
+                        alpha = alphaConic;
+                    <span class="keyword">end</span>
+                <span class="keyword">elseif</span> bbType == 3 <span class="comment">% Gradient Method with retards (bb type 1, random selection of previous step)</span>
+                    sy = s'*y;
+                    alpha = (s'*s)/sy;
+                    <span class="keyword">if</span> alpha &lt;= 1e-10 || alpha &gt; 1e10
+                        alpha = 1;
+                    <span class="keyword">end</span>
+                    v(1+mod(i-2,5)) = alpha;
+                    alpha = v(ceil(rand*length(v)));
+                <span class="keyword">end</span>
+                d = -alpha*g;
+            <span class="keyword">end</span>
+            g_old = g;
+            myF_old = f;
+
+
+        <span class="keyword">case</span> CG <span class="comment">% Non-Linear Conjugate Gradient</span>
+
+            <span class="keyword">if</span> i == 1
+                d = -g; <span class="comment">% Initially use steepest descent direction</span>
+            <span class="keyword">else</span>
+                gtgo = g'*g_old;
+                gotgo = g_old'*g_old;
+
+                <span class="keyword">if</span> cgUpdate == 0
+                    <span class="comment">% Fletcher-Reeves</span>
+                    beta = (g'*g)/(gotgo);
+                <span class="keyword">elseif</span> cgUpdate == 1
+                    <span class="comment">% Polak-Ribiere</span>
+                    beta = (g'*(g-g_old)) /(gotgo);
+                <span class="keyword">elseif</span> cgUpdate == 2
+                    <span class="comment">% Hestenes-Stiefel</span>
+                    beta = (g'*(g-g_old))/((g-g_old)'*d);
+                <span class="keyword">else</span>
+                    <span class="comment">% Gilbert-Nocedal</span>
+                    beta_FR = (g'*(g-g_old)) /(gotgo);
+                    beta_PR = (g'*g-gtgo)/(gotgo);
+                    beta = max(-beta_FR,min(beta_PR,beta_FR));
+                <span class="keyword">end</span>
+
+                d = -g + beta*d;
+
+                <span class="comment">% Restart if not a direction of sufficient descent</span>
+                <span class="keyword">if</span> g'*d &gt; -tolX
+                    <span class="keyword">if</span> debug
+                        fprintf(<span class="string">'Restarting CG\n'</span>);
+                    <span class="keyword">end</span>
+                    beta = 0;
+                    d = -g;
+                <span class="keyword">end</span>
+
+                <span class="comment">% Old restart rule:</span>
+                <span class="comment">%if beta &lt; 0 || abs(gtgo)/(gotgo) &gt;= 0.1 || g'*d &gt;= 0</span>
+
+            <span class="keyword">end</span>
+            g_old = g;
+
+        <span class="keyword">case</span> PCG <span class="comment">% Preconditioned Non-Linear Conjugate Gradient</span>
+
+            <span class="comment">% Apply preconditioner to negative gradient</span>
+            <span class="keyword">if</span> isempty(precFunc)
+                <span class="comment">% Use L-BFGS Preconditioner</span>
+                <span class="keyword">if</span> i == 1
+                    old_dirs = zeros(length(g),0);
+                    old_stps = zeros(length(g),0);
+                    Hdiag = 1;
+                    s = -g;
+                <span class="keyword">else</span>
+                    [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+
+                    <span class="keyword">if</span> useMex
+                        s = lbfgsC(-g,old_dirs,old_stps,Hdiag);
+                    <span class="keyword">else</span>
+                        s = lbfgs(-g,old_dirs,old_stps,Hdiag);
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">else</span> <span class="comment">% User-supplied preconditioner</span>
+                s = precFunc(-g,x,varargin{:});
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> i == 1
+                d = s;
+            <span class="keyword">else</span>
+
+                <span class="keyword">if</span> cgUpdate == 0
+                    <span class="comment">% Preconditioned Fletcher-Reeves</span>
+                    beta = (g'*s)/(g_old'*s_old);
+                <span class="keyword">elseif</span> cgUpdate &lt; 3
+                    <span class="comment">% Preconditioned Polak-Ribiere</span>
+                    beta = (g'*(s-s_old))/(g_old'*s_old);
+                <span class="keyword">else</span>
+                    <span class="comment">% Preconditioned Gilbert-Nocedal</span>
+                    beta_FR = (g'*s)/(g_old'*s_old);
+                    beta_PR = (g'*(s-s_old))/(g_old'*s_old);
+                    beta = max(-beta_FR,min(beta_PR,beta_FR));
+                <span class="keyword">end</span>
+                d = s + beta*d;
+
+                <span class="keyword">if</span> g'*d &gt; -tolX
+                    <span class="keyword">if</span> debug
+                        fprintf(<span class="string">'Restarting CG\n'</span>);
+                    <span class="keyword">end</span>
+                    beta = 0;
+                    d = s;
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+            g_old = g;
+            s_old = s;
+        <span class="keyword">case</span> LBFGS <span class="comment">% L-BFGS</span>
+
+            <span class="comment">% Update the direction and step sizes</span>
+
+            <span class="keyword">if</span> i == 1
+                d = -g; <span class="comment">% Initially use steepest descent direction</span>
+                old_dirs = zeros(length(g),0);
+                old_stps = zeros(length(d),0);
+                Hdiag = 1;
+            <span class="keyword">else</span>
+                <span class="keyword">if</span> Damped
+                    [old_dirs,old_stps,Hdiag] = dampedUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                <span class="keyword">else</span>
+                    [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                <span class="keyword">end</span>
+
+                <span class="keyword">if</span> useMex
+                    d = lbfgsC(-g,old_dirs,old_stps,Hdiag);
+                <span class="keyword">else</span>
+                    d = lbfgs(-g,old_dirs,old_stps,Hdiag);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            g_old = g;
+
+        <span class="keyword">case</span> QNEWTON <span class="comment">% Use quasi-Newton Hessian approximation</span>
+
+            <span class="keyword">if</span> i == 1
+                d = -g;
+            <span class="keyword">else</span>
+                <span class="comment">% Compute difference vectors</span>
+                y = g-g_old;
+                s = t*d;
+
+                <span class="keyword">if</span> i == 2
+                    <span class="comment">% Make initial Hessian approximation</span>
+                    <span class="keyword">if</span> initialHessType == 0
+                        <span class="comment">% Identity</span>
+                        <span class="keyword">if</span> qnUpdate &lt;= 1
+                            R = eye(length(g));
+                        <span class="keyword">else</span>
+                            H = eye(length(g));
+                        <span class="keyword">end</span>
+                    <span class="keyword">else</span>
+                        <span class="comment">% Scaled Identity</span>
+                        <span class="keyword">if</span> debug
+                            fprintf(<span class="string">'Scaling Initial Hessian Approximation\n'</span>);
+                        <span class="keyword">end</span>
+                        <span class="keyword">if</span> qnUpdate &lt;= 1
+                            <span class="comment">% Use Cholesky of Hessian approximation</span>
+                            R = sqrt((y'*y)/(y'*s))*eye(length(g));
+                        <span class="keyword">else</span>
+                            <span class="comment">% Use Inverse of Hessian approximation</span>
+                            H = eye(length(g))*(y'*s)/(y'*y);
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+
+                <span class="keyword">if</span> qnUpdate == 0 <span class="comment">% Use BFGS updates</span>
+                    Bs = R'*(R*s);
+                    <span class="keyword">if</span> Damped
+                        eta = .02;
+                        <span class="keyword">if</span> y'*s &lt; eta*s'*Bs
+                            <span class="keyword">if</span> debug
+                                fprintf(<span class="string">'Damped Update\n'</span>);
+                            <span class="keyword">end</span>
+                            theta = min(max(0,((1-eta)*s'*Bs)/(s'*Bs - y'*s)),1);
+                            y = theta*y + (1-theta)*Bs;
+                        <span class="keyword">end</span>
+                        R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),<span class="string">'-'</span>);
+                    <span class="keyword">else</span>
+                        <span class="keyword">if</span> y'*s &gt; 1e-10
+                            R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),<span class="string">'-'</span>);
+                        <span class="keyword">else</span>
+                            <span class="keyword">if</span> debug
+                                fprintf(<span class="string">'Skipping Update\n'</span>);
+                            <span class="keyword">end</span>
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">elseif</span> qnUpdate == 1 <span class="comment">% Perform SR1 Update if it maintains positive-definiteness</span>
+
+                    Bs = R'*(R*s);
+                    ymBs = y-Bs;
+                    <span class="keyword">if</span> abs(s'*ymBs) &gt;= norm(s)*norm(ymBs)*1e-8 &amp;&amp; (s-((R\(R'\y))))'*y &gt; 1e-10
+                        R = cholupdate(R,-ymBs/sqrt(ymBs'*s),<span class="string">'-'</span>);
+                    <span class="keyword">else</span>
+                        <span class="keyword">if</span> debug
+                            fprintf(<span class="string">'SR1 not positive-definite, doing BFGS Update\n'</span>);
+                        <span class="keyword">end</span>
+                        <span class="keyword">if</span> Damped
+                            eta = .02;
+                            <span class="keyword">if</span> y'*s &lt; eta*s'*Bs
+                                <span class="keyword">if</span> debug
+                                    fprintf(<span class="string">'Damped Update\n'</span>);
+                                <span class="keyword">end</span>
+                                theta = min(max(0,((1-eta)*s'*Bs)/(s'*Bs - y'*s)),1);
+                                y = theta*y + (1-theta)*Bs;
+                            <span class="keyword">end</span>
+                            R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),<span class="string">'-'</span>);
+                        <span class="keyword">else</span>
+                            <span class="keyword">if</span> y'*s &gt; 1e-10
+                                R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),<span class="string">'-'</span>);
+                            <span class="keyword">else</span>
+                                <span class="keyword">if</span> debug
+                                    fprintf(<span class="string">'Skipping Update\n'</span>);
+                                <span class="keyword">end</span>
+                            <span class="keyword">end</span>
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">elseif</span> qnUpdate == 2 <span class="comment">% Use Hoshino update</span>
+                    v = sqrt(y'*H*y)*(s/(s'*y) - (H*y)/(y'*H*y));
+                    phi = 1/(1 + (y'*H*y)/(s'*y));
+                    H = H + (s*s')/(s'*y) - (H*y*y'*H)/(y'*H*y) + phi*v*v';
+
+                <span class="keyword">elseif</span> qnUpdate == 3 <span class="comment">% Self-Scaling BFGS update</span>
+                    ys = y'*s;
+                    Hy = H*y;
+                    yHy = y'*Hy;
+                    gamma = ys/yHy;
+                    v = sqrt(yHy)*(s/ys - Hy/yHy);
+                    H = gamma*(H - Hy*Hy'/yHy + v*v') + (s*s')/ys;
+                <span class="keyword">elseif</span> qnUpdate == 4 <span class="comment">% Oren's Self-Scaling Variable Metric update</span>
+
+                    <span class="comment">% Oren's method</span>
+                    <span class="keyword">if</span> (s'*y)/(y'*H*y) &gt; 1
+                        phi = 1; <span class="comment">% BFGS</span>
+                        omega = 0;
+                    <span class="keyword">elseif</span> (s'*(H\s))/(s'*y) &lt; 1
+                        phi = 0; <span class="comment">% DFP</span>
+                        omega = 1;
+                    <span class="keyword">else</span>
+                        phi = (s'*y)*(y'*H*y-s'*y)/((s'*(H\s))*(y'*H*y)-(s'*y)^2);
+                        omega = phi;
+                    <span class="keyword">end</span>
+
+                    gamma = (1-omega)*(s'*y)/(y'*H*y) + omega*(s'*(H\s))/(s'*y);
+                    v = sqrt(y'*H*y)*(s/(s'*y) - (H*y)/(y'*H*y));
+                    H = gamma*(H - (H*y*y'*H)/(y'*H*y) + phi*v*v') + (s*s')/(s'*y);
+
+                <span class="keyword">elseif</span> qnUpdate == 5 <span class="comment">% McCormick-Huang asymmetric update</span>
+                    theta = 1;
+                    phi = 0;
+                    psi = 1;
+                    omega = 0;
+                    t1 = s*(theta*s + phi*H'*y)';
+                    t2 = (theta*s + phi*H'*y)'*y;
+                    t3 = H*y*(psi*s + omega*H'*y)';
+                    t4 = (psi*s + omega*H'*y)'*y;
+                    H = H + t1/t2 - t3/t4;
+                <span class="keyword">end</span>
+
+                <span class="keyword">if</span> qnUpdate &lt;= 1
+                    d = -R\(R'\g);
+                <span class="keyword">else</span>
+                    d = -H*g;
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+            g_old = g;
+
+        <span class="keyword">case</span> NEWTON0 <span class="comment">% Hessian-Free Newton</span>
+
+            cgMaxIter = min(p,maxFunEvals-funEvals);
+            cgForce = min(0.5,sqrt(norm(g)))*norm(g);
+
+            <span class="comment">% Set-up preconditioner</span>
+            precondFunc = [];
+            precondArgs = [];
+            <span class="keyword">if</span> cgSolve == 1
+                <span class="keyword">if</span> isempty(precFunc) <span class="comment">% Apply L-BFGS preconditioner</span>
+                    <span class="keyword">if</span> i == 1
+                        old_dirs = zeros(length(g),0);
+                        old_stps = zeros(length(g),0);
+                        Hdiag = 1;
+                    <span class="keyword">else</span>
+                        [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                        <span class="keyword">if</span> useMex
+                            precondFunc = @lbfgsC;
+                        <span class="keyword">else</span>
+                            precondFunc = @lbfgs;
+                        <span class="keyword">end</span>
+                        precondArgs = {old_dirs,old_stps,Hdiag};
+                    <span class="keyword">end</span>
+                    g_old = g;
+                <span class="keyword">else</span>
+                    <span class="comment">% Apply user-defined preconditioner</span>
+                    precondFunc = precFunc;
+                    precondArgs = {x,varargin{:}};
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="comment">% Solve Newton system using cg and hessian-vector products</span>
+            <span class="keyword">if</span> isempty(HvFunc)
+                <span class="comment">% No user-supplied Hessian-vector function,</span>
+                <span class="comment">% use automatic differentiation</span>
+                HvFun = @autoHv;
+                HvArgs = {x,g,useComplex,funObj,varargin{:}};
+            <span class="keyword">else</span>
+                <span class="comment">% Use user-supplid Hessian-vector function</span>
+                HvFun = HvFunc;
+                HvArgs = {x,varargin{:}};
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> useNegCurv
+                [d,cgIter,cgRes,negCurv] = conjGrad([],-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs,HvFun,HvArgs);
+            <span class="keyword">else</span>
+                [d,cgIter,cgRes] = conjGrad([],-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs,HvFun,HvArgs);
+            <span class="keyword">end</span>
+
+            funEvals = funEvals+cgIter;
+            <span class="keyword">if</span> debug
+                fprintf(<span class="string">'newtonCG stopped on iteration %d w/ residual %.5e\n'</span>,cgIter,cgRes);
+
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> useNegCurv
+                <span class="keyword">if</span> ~isempty(negCurv)
+                    <span class="comment">%if debug</span>
+                    fprintf(<span class="string">'Using negative curvature direction\n'</span>);
+                    <span class="comment">%end</span>
+                    d = negCurv/norm(negCurv);
+                    d = d/sum(abs(g));
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+        <span class="keyword">case</span> NEWTON <span class="comment">% Newton search direction</span>
+
+            <span class="keyword">if</span> cgSolve == 0
+                <span class="keyword">if</span> HessianModify == 0
+                    <span class="comment">% Attempt to perform a Cholesky factorization of the Hessian</span>
+                    [R,posDef] = chol(H);
+
+                    <span class="comment">% If the Cholesky factorization was successful, then the Hessian is</span>
+                    <span class="comment">% positive definite, solve the system</span>
+                    <span class="keyword">if</span> posDef == 0
+                        d = -R\(R'\g);
+
+                    <span class="keyword">else</span>
+                        <span class="comment">% otherwise, adjust the Hessian to be positive definite based on the</span>
+                        <span class="comment">% minimum eigenvalue, and solve with QR</span>
+                        <span class="comment">% (expensive, we don't want to do this very much)</span>
+                        <span class="keyword">if</span> debug
+                            fprintf(<span class="string">'Adjusting Hessian\n'</span>);
+                        <span class="keyword">end</span>
+                        H = H + eye(length(g)) * max(0,1e-12 - min(real(eig(H))));
+                        d = -H\g;
+                    <span class="keyword">end</span>
+                <span class="keyword">elseif</span> HessianModify == 1
+                    <span class="comment">% Modified Incomplete Cholesky</span>
+                    R = mcholinc(H,debug);
+                    d = -R\(R'\g);
+                <span class="keyword">elseif</span> HessianModify == 2
+                    <span class="comment">% Modified Generalized Cholesky</span>
+                    <span class="keyword">if</span> useMex
+                        [L D perm] = mcholC(H);
+                    <span class="keyword">else</span>
+                        [L D perm] = mchol(H);
+                    <span class="keyword">end</span>
+                    d(perm) = -L' \ ((D.^-1).*(L \ g(perm)));
+
+                <span class="keyword">elseif</span> HessianModify == 3
+                    <span class="comment">% Modified Spectral Decomposition</span>
+                    [V,D] = eig((H+H')/2);
+                    D = diag(D);
+                    D = max(abs(D),max(max(abs(D)),1)*1e-12);
+                    d = -V*((V'*g)./D);
+                <span class="keyword">elseif</span> HessianModify == 4
+                    <span class="comment">% Modified Symmetric Indefinite Factorization</span>
+                    [L,D,perm] = ldl(H,<span class="string">'vector'</span>);
+                    [blockPos junk] = find(triu(D,1));
+                    <span class="keyword">for</span> diagInd = setdiff(setdiff(1:p,blockPos),blockPos+1)
+                        <span class="keyword">if</span> D(diagInd,diagInd) &lt; 1e-12
+                            D(diagInd,diagInd) = 1e-12;
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                    <span class="keyword">for</span> blockInd = blockPos'
+                        block = D(blockInd:blockInd+1,blockInd:blockInd+1);
+                        block_a = block(1);
+                        block_b = block(2);
+                        block_d = block(4);
+                        lambda = (block_a+block_d)/2 - sqrt(4*block_b^2 + (block_a - block_d)^2)/2;
+                        D(blockInd:blockInd+1,blockInd:blockInd+1) = block+eye(2)*(lambda+1e-12);
+                    <span class="keyword">end</span>
+                    d(perm) = -L' \ (D \ (L \ g(perm)));
+                <span class="keyword">else</span>
+                    <span class="comment">% Take Newton step if Hessian is pd,</span>
+                    <span class="comment">% otherwise take a step with negative curvature</span>
+                    [R,posDef] = chol(H);
+                    <span class="keyword">if</span> posDef == 0
+                        d = -R\(R'\g);
+                    <span class="keyword">else</span>
+                        <span class="keyword">if</span> debug
+                            fprintf(<span class="string">'Taking Direction of Negative Curvature\n'</span>);
+                        <span class="keyword">end</span>
+                        [V,D] = eig(H);
+                        u = V(:,1);
+                        d = -sign(u'*g)*u;
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+
+            <span class="keyword">else</span>
+                <span class="comment">% Solve with Conjugate Gradient</span>
+                cgMaxIter = p;
+                cgForce = min(0.5,sqrt(norm(g)))*norm(g);
+
+                <span class="comment">% Select Preconditioner</span>
+                <span class="keyword">if</span> cgSolve == 1
+                    <span class="comment">% No preconditioner</span>
+                    precondFunc = [];
+                    precondArgs = [];
+                <span class="keyword">elseif</span> cgSolve == 2
+                    <span class="comment">% Diagonal preconditioner</span>
+                    precDiag = diag(H);
+                    precDiag(precDiag &lt; 1e-12) = 1e-12 - min(precDiag);
+                    precondFunc = @precondDiag;
+                    precondArgs = {precDiag.^-1};
+                <span class="keyword">elseif</span> cgSolve == 3
+                    <span class="comment">% L-BFGS preconditioner</span>
+                    <span class="keyword">if</span> i == 1
+                        old_dirs = zeros(length(g),0);
+                        old_stps = zeros(length(g),0);
+                        Hdiag = 1;
+                    <span class="keyword">else</span>
+                        [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                    <span class="keyword">end</span>
+                    g_old = g;
+                    <span class="keyword">if</span> useMex
+                        precondFunc = @lbfgsC;
+                    <span class="keyword">else</span>
+                        precondFunc = @lbfgs;
+                    <span class="keyword">end</span>
+                    precondArgs = {old_dirs,old_stps,Hdiag};
+                <span class="keyword">elseif</span> cgSolve &gt; 0
+                    <span class="comment">% Symmetric Successive Overelaxation Preconditioner</span>
+                    omega = cgSolve;
+                    D = diag(H);
+                    D(D &lt; 1e-12) = 1e-12 - min(D);
+                    precDiag = (omega/(2-omega))*D.^-1;
+                    precTriu = diag(D/omega) + triu(H,1);
+                    precondFunc = @precondTriuDiag;
+                    precondArgs = {precTriu,precDiag.^-1};
+                <span class="keyword">else</span>
+                    <span class="comment">% Incomplete Cholesky Preconditioner</span>
+                    opts.droptol = -cgSolve;
+                    opts.rdiag = 1;
+                    R = cholinc(sparse(H),opts);
+                    <span class="keyword">if</span> min(diag(R)) &lt; 1e-12
+                        R = cholinc(sparse(H + eye*(1e-12 - min(diag(R)))),opts);
+                    <span class="keyword">end</span>
+                    precondFunc = @precondTriu;
+                    precondArgs = {R};
+                <span class="keyword">end</span>
+
+                <span class="comment">% Run cg with the appropriate preconditioner</span>
+                <span class="keyword">if</span> isempty(HvFunc)
+                    <span class="comment">% No user-supplied Hessian-vector function</span>
+                    [d,cgIter,cgRes] = conjGrad(H,-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs);
+                <span class="keyword">else</span>
+                    <span class="comment">% Use user-supplied Hessian-vector function</span>
+                    [d,cgIter,cgRes] = conjGrad(H,-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs,HvFunc,{x,varargin{:}});
+                <span class="keyword">end</span>
+                <span class="keyword">if</span> debug
+                    fprintf(<span class="string">'CG stopped after %d iterations w/ residual %.5e\n'</span>,cgIter,cgRes);
+                    <span class="comment">%funEvals = funEvals + cgIter;</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+        <span class="keyword">case</span> TENSOR <span class="comment">% Tensor Method</span>
+
+            <span class="keyword">if</span> numDiff
+                <span class="comment">% Compute 3rd-order Tensor Numerically</span>
+                [junk1 junk2 junk3 T] = autoTensor(x,useComplex,funObj,varargin{:});
+            <span class="keyword">else</span>
+                <span class="comment">% Use user-supplied 3rd-derivative Tensor</span>
+                [junk1 junk2 junk3 T] = feval(funObj, x, varargin{:});
+            <span class="keyword">end</span>
+            options_sub.Method = <span class="string">'newton'</span>;
+            options_sub.Display = <span class="string">'none'</span>;
+            options_sub.TolX = tolX;
+            options_sub.TolFun = tolFun;
+            d = minFunc(@taylorModel,zeros(p,1),options_sub,f,g,H,T);
+
+            <span class="keyword">if</span> any(abs(d) &gt; 1e5) || all(abs(d) &lt; 1e-5) || g'*d &gt; -tolX
+                <span class="keyword">if</span> debug
+                    fprintf(<span class="string">'Using 2nd-Order Step\n'</span>);
+                <span class="keyword">end</span>
+                [V,D] = eig((H+H')/2);
+                D = diag(D);
+                D = max(abs(D),max(max(abs(D)),1)*1e-12);
+                d = -V*((V'*g)./D);
+            <span class="keyword">else</span>
+                <span class="keyword">if</span> debug
+                    fprintf(<span class="string">'Using 3rd-Order Step\n'</span>);
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> ~isLegal(d)
+        fprintf(<span class="string">'Step direction is illegal!\n'</span>);
+        pause;
+        <span class="keyword">return</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% ****************** COMPUTE STEP LENGTH ************************</span>
+
+    <span class="comment">% Directional Derivative</span>
+    gtd = g'*d;
+
+    <span class="comment">% Check that progress can be made along direction</span>
+    <span class="keyword">if</span> gtd &gt; -tolX
+        exitflag=2;
+        msg = <span class="string">'Directional Derivative below TolX'</span>;
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+
+    <span class="comment">% Select Initial Guess</span>
+    <span class="keyword">if</span> i == 1
+        <span class="keyword">if</span> method &lt; NEWTON0
+            t = min(1,1/sum(abs(g)));
+        <span class="keyword">else</span>
+            t = 1;
+        <span class="keyword">end</span>
+    <span class="keyword">else</span>
+        <span class="keyword">if</span> LS_init == 0
+            <span class="comment">% Newton step</span>
+            t = 1;
+        <span class="keyword">elseif</span> LS_init == 1
+            <span class="comment">% Close to previous step length</span>
+            t = t*min(2,(gtd_old)/(gtd));
+        <span class="keyword">elseif</span> LS_init == 2
+            <span class="comment">% Quadratic Initialization based on {f,g} and previous f</span>
+            t = min(1,2*(f-f_old)/(gtd));
+        <span class="keyword">elseif</span> LS_init == 3
+            <span class="comment">% Double previous step length</span>
+            t = min(1,t*2);
+        <span class="keyword">elseif</span> LS_init == 4
+            <span class="comment">% Scaled step length if possible</span>
+            <span class="keyword">if</span> isempty(HvFunc)
+                <span class="comment">% No user-supplied Hessian-vector function,</span>
+                <span class="comment">% use automatic differentiation</span>
+                dHd = d'*autoHv(d,x,g,0,funObj,varargin{:});
+            <span class="keyword">else</span>
+                <span class="comment">% Use user-supplid Hessian-vector function</span>
+                dHd = d'*HvFunc(d,x,varargin{:});
+            <span class="keyword">end</span>
+
+            funEvals = funEvals + 1;
+            <span class="keyword">if</span> dHd &gt; 0
+                t = -gtd/(dHd);
+            <span class="keyword">else</span>
+                t = min(1,2*(f-f_old)/(gtd));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">if</span> t &lt;= 0
+            t = 1;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    f_old = f;
+    gtd_old = gtd;
+
+    <span class="comment">% Compute reference fr if using non-monotone objective</span>
+    <span class="keyword">if</span> Fref == 1
+        fr = f;
+    <span class="keyword">else</span>
+        <span class="keyword">if</span> i == 1
+            old_fvals = repmat(-inf,[Fref 1]);
+        <span class="keyword">end</span>
+
+        <span class="keyword">if</span> i &lt;= Fref
+            old_fvals(i) = f;
+        <span class="keyword">else</span>
+            old_fvals = [old_fvals(2:end);f];
+        <span class="keyword">end</span>
+        fr = max(old_fvals);
+    <span class="keyword">end</span>
+
+    computeHessian = 0;
+    <span class="keyword">if</span> method &gt;= NEWTON
+        <span class="keyword">if</span> HessianIter == 1
+            computeHessian = 1;
+        <span class="keyword">elseif</span> i &gt; 1 &amp;&amp; mod(i-1,HessianIter) == 0
+            computeHessian = 1;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% Line Search</span>
+    f_old = f;
+    <span class="keyword">if</span> LS &lt; 3 <span class="comment">% Use Armijo Bactracking</span>
+        <span class="comment">% Perform Backtracking line search</span>
+        <span class="keyword">if</span> computeHessian
+            [t,x,f,g,LSfunEvals,H] = ArmijoBacktrack(x,t,d,f,fr,g,gtd,c1,LS,tolX,debug,doPlot,LS_saveHessianComp,funObj,varargin{:});
+        <span class="keyword">else</span>
+            [t,x,f,g,LSfunEvals] = ArmijoBacktrack(x,t,d,f,fr,g,gtd,c1,LS,tolX,debug,doPlot,1,funObj,varargin{:});
+        <span class="keyword">end</span>
+        funEvals = funEvals + LSfunEvals;
+
+    <span class="keyword">elseif</span> LS &lt; 6
+        <span class="comment">% Find Point satisfying Wolfe</span>
+
+        <span class="keyword">if</span> computeHessian
+            [t,f,g,LSfunEvals,H] = WolfeLineSearch(x,t,d,f,g,gtd,c1,c2,LS,25,tolX,debug,doPlot,LS_saveHessianComp,funObj,varargin{:});
+        <span class="keyword">else</span>
+            [t,f,g,LSfunEvals] = WolfeLineSearch(x,t,d,f,g,gtd,c1,c2,LS,25,tolX,debug,doPlot,1,funObj,varargin{:});
+        <span class="keyword">end</span>
+        funEvals = funEvals + LSfunEvals;
+        x = x + t*d;
+
+    <span class="keyword">else</span>
+        <span class="comment">% Use Matlab optim toolbox line search</span>
+        [t,f_new,fPrime_new,g_new,LSexitFlag,LSiter]=<span class="keyword">...</span>
+            lineSearch({<span class="string">'fungrad'</span>,[],funObj},x,p,1,p,d,f,gtd,t,c1,c2,-inf,maxFunEvals-funEvals,<span class="keyword">...</span>
+            tolX,[],[],[],varargin{:});
+        funEvals = funEvals + LSiter;
+        <span class="keyword">if</span> isempty(t)
+            exitflag = -2;
+            msg = <span class="string">'Matlab LineSearch failed'</span>;
+            <span class="keyword">break</span>;
+        <span class="keyword">end</span>
+
+        <span class="keyword">if</span> method &gt;= NEWTON
+            [f_new,g_new,H] = funObj(x + t*d,varargin{:});
+            funEvals = funEvals + 1;
+        <span class="keyword">end</span>
+        x = x + t*d;
+        f = f_new;
+        g = g_new;
+    <span class="keyword">end</span>
+
+    <span class="comment">% Output iteration information</span>
+    <span class="keyword">if</span> verboseI
+        fprintf(<span class="string">'%10d %10d %15.5e %15.5e %15.5e\n'</span>,i,funEvals*funEvalMultiplier,t,f,sum(abs(g)));
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> logfile
+        fid = fopen(logfile, <span class="string">'a'</span>);
+        <span class="keyword">if</span> (fid &gt; 0)
+            fprintf(fid, <span class="string">'-- %10d %10d %15.5e %15.5e %15.5e\n'</span>,i,funEvals*funEvalMultiplier,t,f,sum(abs(g)));
+            fclose(fid);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+
+    <span class="comment">% Output Function</span>
+    <span class="keyword">if</span> ~isempty(outputFcn)
+        callOutput(outputFcn,x,<span class="string">'iter'</span>,i,funEvals,f,t,gtd,g,d,sum(abs(g)),varargin{:});
+    <span class="keyword">end</span>
+
+    <span class="comment">% Update Trace</span>
+    trace.fval(end+1,1) = f;
+    trace.funcCount(end+1,1) = funEvals;
+
+    <span class="comment">% Check Optimality Condition</span>
+    <span class="keyword">if</span> sum(abs(g)) &lt;= tolFun
+        exitflag=1;
+        msg = <span class="string">'Optimality Condition below TolFun'</span>;
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+
+    <span class="comment">% ******************* Check for lack of progress *******************</span>
+
+    <span class="keyword">if</span> sum(abs(t*d)) &lt;= tolX
+        exitflag=2;
+        msg = <span class="string">'Step Size below TolX'</span>;
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+
+
+    <span class="keyword">if</span> abs(f-f_old) &lt; tolX
+        exitflag=2;
+        msg = <span class="string">'Function Value changing by less than TolX'</span>;
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+
+    <span class="comment">% ******** Check for going over iteration/evaluation limit *******************</span>
+
+    <span class="keyword">if</span> funEvals*funEvalMultiplier &gt; maxFunEvals
+        exitflag = 0;
+        msg = <span class="string">'Exceeded Maximum Number of Function Evaluations'</span>;
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> i == maxIter
+        exitflag = 0;
+        msg=<span class="string">'Exceeded Maximum Number of Iterations'</span>;
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> verbose
+    fprintf(<span class="string">'%s\n'</span>,msg);
+<span class="keyword">end</span>
+<span class="keyword">if</span> nargout &gt; 3
+    output = struct(<span class="string">'iterations'</span>,i,<span class="string">'funcCount'</span>,funEvals*funEvalMultiplier,<span class="keyword">...</span>
+        <span class="string">'algorithm'</span>,method,<span class="string">'firstorderopt'</span>,sum(abs(g)),<span class="string">'message'</span>,msg,<span class="string">'trace'</span>,trace);
+<span class="keyword">end</span>
+
+<span class="comment">% Output Function</span>
+<span class="keyword">if</span> ~isempty(outputFcn)
+    callOutput(outputFcn,x,<span class="string">'done'</span>,i,funEvals,f,t,gtd,g,d,sum(abs(g)),varargin{:});
+<span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Input argument "x0" is undefined.
+
+Error in ==&gt; minFunc at 262
+p = length(x0);
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.10<br></p></div><!--
+##### SOURCE BEGIN #####
+function [x,f,exitflag,output] = minFunc(funObj,x0,options,varargin)
+% minFunc(funObj,x0,options,varargin)
+%
+% Unconstrained optimizer using a line search strategy
+%
+% Uses an interface very similar to fminunc
+%   (it doesn't support all of the optimization toolbox options,
+%       but supports many other options).
+%
+% It computes descent directions using one of ('Method'):
+%   - 'sd': Steepest Descent
+%       (no previous information used, not recommended)
+%   - 'csd': Cyclic Steepest Descent
+%       (uses previous step length for a fixed length cycle)
+%   - 'bb': Barzilai and Borwein Gradient
+%       (uses only previous step)
+%   - 'cg': Non-Linear Conjugate Gradient
+%       (uses only previous step and a vector beta)
+%   - 'scg': Scaled Non-Linear Conjugate Gradient
+%       (uses previous step and a vector beta, 
+%           and Hessian-vector products to initialize line search)
+%   - 'pcg': Preconditionined Non-Linear Conjugate Gradient
+%       (uses only previous step and a vector beta, preconditioned version)
+%   - 'lbfgs': Quasi-Newton with Limited-Memory BFGS Updating
+%       (default: uses a predetermined nunber of previous steps to form a 
+%           low-rank Hessian approximation)
+%   - 'newton0': Hessian-Free Newton
+%       (numerically computes Hessian-Vector products)
+%   - 'pnewton0': Preconditioned Hessian-Free Newton 
+%       (numerically computes Hessian-Vector products, preconditioned
+%       version)
+%   - 'qnewton': Quasi-Newton Hessian approximation
+%       (uses dense Hessian approximation)
+%   - 'mnewton': Newton's method with Hessian calculation after every
+%   user-specified number of iterations
+%       (needs user-supplied Hessian matrix)
+%   - 'newton': Newton's method with Hessian calculation every iteration
+%       (needs user-supplied Hessian matrix)
+%   - 'tensor': Tensor
+%       (needs user-supplied Hessian matrix and Tensor of 3rd partial derivatives)
+%
+% Several line search strategies are available for finding a step length satisfying
+%   the termination criteria ('LS'):
+%   - 0: Backtrack w/ Step Size Halving
+%   - 1: Backtrack w/ Quadratic/Cubic Interpolation from new function values
+%   - 2: Backtrack w/ Cubic Interpolation from new function + gradient
+%   values (default for 'bb' and 'sd')
+%   - 3: Bracketing w/ Step Size Doubling and Bisection
+%   - 4: Bracketing w/ Cubic Interpolation/Extrapolation with function +
+%   gradient values (default for all except 'bb' and 'sd')
+%   - 5: Bracketing w/ Mixed Quadratic/Cubic Interpolation/Extrapolation
+%   - 6: Use Matlab Optimization Toolbox's line search
+%           (requires Matlab's linesearch.m to be added to the path)
+%
+%   Above, the first three find a point satisfying the Armijo conditions,
+%   while the last four search for find a point satisfying the Wolfe
+%   conditions.  If the objective function overflows, it is recommended
+%   to use one of the first 3.
+%   The first three can be used to perform a non-monotone
+%   linesearch by changing the option 'Fref'.
+%
+% Several strategies for choosing the initial step size are avaiable ('LS_init'):
+%   - 0: Always try an initial step length of 1 (default for all except 'cg' and 'sd')
+%       (t = 1)
+%   - 1: Use a step similar to the previous step (default for 'cg' and 'sd')
+%       (t = t_old*min(2,g'd/g_old'd_old))
+%   - 2: Quadratic Initialization using previous function value and new
+%   function value/gradient (use this if steps tend to be very long)
+%       (t = min(1,2*(f-f_old)/g))
+%   - 3: The minimum between 1 and twice the previous step length
+%       (t = min(1,2*t)
+%   - 4: The scaled conjugate gradient step length (may accelerate
+%   conjugate gradient methods, but requires a Hessian-vector product)
+%       (t = g'd/d'Hd)
+%
+% Inputs:
+%   funObj is a function handle
+%   x0 is a starting vector;
+%   options is a struct containing parameters
+%  (defaults are used for non-existent or blank fields)
+%   all other arguments are passed to funObj
+%
+% Outputs:
+%   x is the minimum value found
+%   f is the function value at the minimum found
+%   exitflag returns an exit condition
+%   output returns a structure with other information
+%
+% Supported Input Options
+%   Display - Level of display [ off | final | (iter) | full | excessive ]
+%   MaxFunEvals - Maximum number of function evaluations allowed (1000)
+%   MaxIter - Maximum number of iterations allowed (500)
+%   TolFun - Termination tolerance on the first-order optimality (1e-5)
+%   TolX - Termination tolerance on progress in terms of function/parameter changes (1e-9)
+%   Method - [ sd | csd | bb | cg | scg | pcg | {lbfgs} | newton0 | pnewton0 |
+%       qnewton | mnewton | newton | tensor ]
+%   c1 - Sufficient Decrease for Armijo condition (1e-4)
+%   c2 - Curvature Decrease for Wolfe conditions (.2 for cg methods, .9 otherwise)
+%   LS_init - Line Search Initialization -see above (2 for cg/sd, 4 for scg, 0 otherwise)
+%   LS - Line Search type -see above (2 for bb, 4 otherwise)
+%   Fref - Setting this to a positive integer greater than 1
+%       will use non-monotone Armijo objective in the line search.
+%       (20 for bb, 10 for csd, 1 for all others)
+%   numDiff - compute derivative numerically
+%       (default: 0) (this option has a different effect for 'newton', see below)
+%   useComplex - if 1, use complex differentials when computing numerical derivatives
+%       to get very accurate values (default: 0)
+%   DerivativeCheck - if 'on', computes derivatives numerically at initial
+%       point and compares to user-supplied derivative (default: 'off')
+%   outputFcn - function to run after each iteration (default: []).  It
+%       should have the following interface:
+%       outputFcn(x,infoStruct,state,varargin{:})
+%   useMex - where applicable, use mex files to speed things up (default: 1)
+%
+% Method-specific input options:
+%   newton:
+%       HessianModify - type of Hessian modification for direct solvers to
+%       use if the Hessian is not positive definite (default: 0)
+%           0: Minimum Euclidean norm s.t. eigenvalues sufficiently large
+%           (requires eigenvalues on iterations where matrix is not pd)
+%           1: Start with (1/2)*||A||_F and increment until Cholesky succeeds
+%           (an approximation to method 0, does not require eigenvalues)
+%           2: Modified LDL factorization
+%           (only 1 generalized Cholesky factorization done and no eigenvalues required)
+%           3: Modified Spectral Decomposition
+%           (requires eigenvalues)
+%           4: Modified Symmetric Indefinite Factorization
+%           5: Uses the eigenvector of the smallest eigenvalue as negative
+%           curvature direction
+%       cgSolve - use conjugate gradient instead of direct solver (default: 0)
+%           0: Direct Solver
+%           1: Conjugate Gradient
+%           2: Conjugate Gradient with Diagonal Preconditioner
+%           3: Conjugate Gradient with LBFGS Preconditioner
+%           x: Conjugate Graident with Symmetric Successive Over Relaxation
+%           Preconditioner with parameter x
+%               (where x is a real number in the range [0,2])
+%           x: Conjugate Gradient with Incomplete Cholesky Preconditioner
+%           with drop tolerance -x
+%               (where x is a real negative number)
+%       numDiff - compute Hessian numerically
+%                 (default: 0, done with complex differentials if useComplex = 1)
+%       LS_saveHessiancomp - when on, only computes the Hessian at the
+%       first and last iteration of the line search (default: 1)
+%   mnewton:
+%       HessianIter - number of iterations to use same Hessian (default: 5)
+%   qnewton:
+%       initialHessType - scale initial Hessian approximation (default: 1)
+%       qnUpdate - type of quasi-Newton update (default: 3):
+%           0: BFGS
+%           1: SR1 (when it is positive-definite, otherwise BFGS)
+%           2: Hoshino
+%           3: Self-Scaling BFGS
+%           4: Oren's Self-Scaling Variable Metric method 
+%           5: McCormick-Huang asymmetric update
+%       Damped - use damped BFGS update (default: 1)
+%   newton0/pnewton0:
+%       HvFunc - user-supplied function that returns Hessian-vector products
+%           (by default, these are computed numerically using autoHv)
+%           HvFunc should have the following interface: HvFunc(v,x,varargin{:})
+%       useComplex - use a complex perturbation to get high accuracy
+%           Hessian-vector products (default: 0)
+%           (the increased accuracy can make the method much more efficient,
+%               but gradient code must properly support complex inputs)
+%       useNegCurv - a negative curvature direction is used as the descent
+%           direction if one is encountered during the cg iterations
+%           (default: 1)
+%       precFunc (for pnewton0 only) - user-supplied preconditioner
+%           (by default, an L-BFGS preconditioner is used)
+%           precFunc should have the following interfact:
+%           precFunc(v,x,varargin{:})
+%   lbfgs:
+%       Corr - number of corrections to store in memory (default: 100)
+%           (higher numbers converge faster but use more memory)
+%       Damped - use damped update (default: 0)
+%   pcg:
+%       cgUpdate - type of update (default: 2)
+%   cg/scg/pcg:
+%       cgUpdate - type of update (default for cg/scg: 2, default for pcg: 1)
+%           0: Fletcher Reeves
+%           1: Polak-Ribiere
+%           2: Hestenes-Stiefel (not supported for pcg)
+%           3: Gilbert-Nocedal
+%       HvFunc (for scg only)- user-supplied function that returns Hessian-vector 
+%           products
+%           (by default, these are computed numerically using autoHv)
+%           HvFunc should have the following interface:
+%           HvFunc(v,x,varargin{:})
+%       precFunc (for pcg only) - user-supplied preconditioner
+%           (by default, an L-BFGS preconditioner is used)
+%           precFunc should have the following interfact:
+%           precFunc(v,x,varargin{:})
+%   bb:
+%       bbType - type of bb step (default: 1)
+%           0: min_alpha ||delta_x - alpha delta_g||_2
+%           1: min_alpha ||alpha delta_x - delta_g||_2
+%           2: Conic BB
+%           3: Gradient method with retards
+%   csd:
+%       cycle - length of cycle (default: 3)
+%
+% Supported Output Options
+%   iterations - number of iterations taken
+%   funcCount - number of function evaluations
+%   algorithm - algorithm used
+%   firstorderopt - first-order optimality
+%   message - exit message
+%   trace.funccount - function evaluations after each iteration
+%   trace.fval - function value after each iteration
+%
+% Author: Mark Schmidt (2006)
+% Web: http://www.cs.ubc.ca/~schmidtm
+%
+% Sources (in order of how much the source material contributes):
+%   J. Nocedal and S.J. Wright.  1999.  "Numerical Optimization".  Springer Verlag.
+%   R. Fletcher.  1987.  "Practical Methods of Optimization".  Wiley.
+%   J. Demmel.  1997.  "Applied Linear Algebra.  SIAM.
+%   R. Barret, M. Berry, T. Chan, J. Demmel, J. Dongarra, V. Eijkhout, R.
+%   Pozo, C. Romine, and H. Van der Vost.  1994.  "Templates for the Solution of
+%   Linear Systems: Building Blocks for Iterative Methods".  SIAM.
+%   J. More and D. Thuente.  "Line search algorithms with guaranteed
+%   sufficient decrease".  ACM Trans. Math. Softw. vol 20, 286-307, 1994.
+%   M. Raydan.  "The Barzilai and Borwein gradient method for the large
+%   scale unconstrained minimization problem".  SIAM J. Optim., 7, 26-33,
+%   (1997).
+%   "Mathematical Optimization".  The Computational Science Education
+%   Project.  1995.
+%   C. Kelley.  1999.  "Iterative Methods for Optimization".  Frontiers in
+%   Applied Mathematics.  SIAM.
+
+if nargin < 3
+    options = [];
+end
+
+% Get Parameters
+[verbose,verboseI,debug,doPlot,maxFunEvals,maxIter,tolFun,tolX,method,...
+    corrections,c1,c2,LS_init,LS,cgSolve,qnUpdate,cgUpdate,initialHessType,...
+    HessianModify,Fref,useComplex,numDiff,LS_saveHessianComp,...
+    DerivativeCheck,Damped,HvFunc,bbType,cycle,...
+    HessianIter,outputFcn,useMex,useNegCurv,precFunc] = ...
+    minFunc_processInputOptions(options);
+
+if isfield(options, 'logfile')
+    logfile = options.logfile;
+else
+    logfile = [];
+end
+
+% Constants
+SD = 0;
+CSD = 1;
+BB = 2;
+CG = 3;
+PCG = 4;
+LBFGS = 5;
+QNEWTON = 6;
+NEWTON0 = 7;
+NEWTON = 8;
+TENSOR = 9;
+
+% Initialize
+p = length(x0);
+d = zeros(p,1);
+x = x0;
+t = 1;
+
+% If necessary, form numerical differentiation functions
+funEvalMultiplier = 1;
+if numDiff && method ~= TENSOR
+    varargin(3:end+2) = varargin(1:end);
+    varargin{1} = useComplex;
+    varargin{2} = funObj;
+    if method ~= NEWTON
+        if debug
+            if useComplex
+                fprintf('Using complex differentials for gradient computation\n');
+            else
+                fprintf('Using finite differences for gradient computation\n');
+            end
+        end
+        funObj = @autoGrad;
+    else
+        if debug
+            if useComplex
+                fprintf('Using complex differentials for gradient computation\n');
+            else
+                fprintf('Using finite differences for gradient computation\n');
+            end
+        end
+        funObj = @autoHess;
+    end
+
+    if method == NEWTON0 && useComplex == 1
+        if debug
+            fprintf('Turning off the use of complex differentials\n');
+        end
+        useComplex = 0;
+    end
+
+    if useComplex
+        funEvalMultiplier = p;
+    else
+        funEvalMultiplier = p+1;
+    end
+end
+
+% Evaluate Initial Point
+if method < NEWTON
+    [f,g] = feval(funObj, x, varargin{:});
+else
+    [f,g,H] = feval(funObj, x, varargin{:});
+    computeHessian = 1;
+end
+funEvals = 1;
+
+if strcmp(DerivativeCheck,'on')
+    if numDiff
+        fprintf('Can not do derivative checking when numDiff is 1\n');
+    end
+    % Check provided gradient/hessian function using numerical derivatives
+    fprintf('Checking Gradient:\n');
+    [f2,g2] = autoGrad(x,useComplex,funObj,varargin{:});
+
+    fprintf('Max difference between user and numerical gradient: %f\n',max(abs(g-g2)));
+    if max(abs(g-g2)) > 1e-4
+        fprintf('User NumDif:\n');
+        [g g2]
+        diff = abs(g-g2)
+        pause;
+    end
+
+    if method >= NEWTON
+        fprintf('Check Hessian:\n');
+        [f2,g2,H2] = autoHess(x,useComplex,funObj,varargin{:});
+
+        fprintf('Max difference between user and numerical hessian: %f\n',max(abs(H(:)-H2(:))));
+        if max(abs(H(:)-H2(:))) > 1e-4
+            H
+            H2
+            diff = abs(H-H2)
+            pause;
+        end
+    end
+end
+
+% Output Log
+if verboseI
+    fprintf('%10s %10s %15s %15s %15s\n','Iteration','FunEvals','Step Length','Function Val','Opt Cond');
+end
+
+if logfile
+    fid = fopen(logfile, 'a');
+    if (fid > 0)
+        fprintf(fid, 'REPLACE_WITH_DASH_DASH %10s %10s %15s %15s %15s\n','Iteration','FunEvals','Step Length','Function Val','Opt Cond');
+        fclose(fid);
+    end
+end
+
+% Output Function
+if ~isempty(outputFcn)
+    callOutput(outputFcn,x,'init',0,funEvals,f,[],[],g,[],sum(abs(g)),varargin{:});
+end
+
+% Initialize Trace
+trace.fval = f;
+trace.funcCount = funEvals;
+
+% Check optimality of initial point
+if sum(abs(g)) <= tolFun
+    exitflag=1;
+    msg = 'Optimality Condition below TolFun';
+    if verbose
+        fprintf('%s\n',msg);
+    end
+    if nargout > 3
+        output = struct('iterations',0,'funcCount',1,...
+            'algorithm',method,'firstorderopt',sum(abs(g)),'message',msg,'trace',trace);
+    end
+    return;
+end
+
+% Perform up to a maximum of 'maxIter' descent steps:
+for i = 1:maxIter
+
+    % ****************** COMPUTE DESCENT DIRECTION *****************
+
+    switch method
+        case SD % Steepest Descent
+            d = -g;
+
+        case CSD % Cyclic Steepest Descent
+
+            if mod(i,cycle) == 1 % Use Steepest Descent
+                alpha = 1;
+                LS_init = 2;
+                LS = 4; % Precise Line Search
+            elseif mod(i,cycle) == mod(1+1,cycle) % Use Previous Step
+                alpha = t;
+                LS_init = 0;
+                LS = 2; % Non-monotonic line search
+            end
+            d = -alpha*g;
+
+        case BB % Steepest Descent with Barzilai and Borwein Step Length
+
+            if i == 1
+                d = -g;
+            else
+                y = g-g_old;
+                s = t*d;
+                if bbType == 0
+                    yy = y'*y;
+                    alpha = (s'*y)/(yy);
+                    if alpha <= 1e-10 || alpha > 1e10
+                        alpha = 1;
+                    end
+                elseif bbType == 1
+                    sy = s'*y;
+                    alpha = (s'*s)/sy;
+                    if alpha <= 1e-10 || alpha > 1e10
+                        alpha = 1;
+                    end
+                elseif bbType == 2 % Conic Interpolation ('Modified BB')
+                    sy = s'*y;
+                    ss = s'*s;
+                    alpha = ss/sy;
+                    if alpha <= 1e-10 || alpha > 1e10
+                        alpha = 1;
+                    end
+                    alphaConic = ss/(6*(myF_old - f) + 4*g'*s + 2*g_old'*s);
+                    if alphaConic > .001*alpha && alphaConic < 1000*alpha
+                        alpha = alphaConic;
+                    end
+                elseif bbType == 3 % Gradient Method with retards (bb type 1, random selection of previous step)
+                    sy = s'*y;
+                    alpha = (s'*s)/sy;
+                    if alpha <= 1e-10 || alpha > 1e10
+                        alpha = 1;
+                    end
+                    v(1+mod(i-2,5)) = alpha;
+                    alpha = v(ceil(rand*length(v)));
+                end
+                d = -alpha*g;
+            end
+            g_old = g;
+            myF_old = f;
+
+
+        case CG % Non-Linear Conjugate Gradient
+
+            if i == 1
+                d = -g; % Initially use steepest descent direction
+            else
+                gtgo = g'*g_old;
+                gotgo = g_old'*g_old;
+
+                if cgUpdate == 0
+                    % Fletcher-Reeves
+                    beta = (g'*g)/(gotgo);
+                elseif cgUpdate == 1
+                    % Polak-Ribiere
+                    beta = (g'*(g-g_old)) /(gotgo);
+                elseif cgUpdate == 2
+                    % Hestenes-Stiefel
+                    beta = (g'*(g-g_old))/((g-g_old)'*d);
+                else
+                    % Gilbert-Nocedal
+                    beta_FR = (g'*(g-g_old)) /(gotgo);
+                    beta_PR = (g'*g-gtgo)/(gotgo);
+                    beta = max(-beta_FR,min(beta_PR,beta_FR));
+                end
+
+                d = -g + beta*d;
+
+                % Restart if not a direction of sufficient descent
+                if g'*d > -tolX
+                    if debug
+                        fprintf('Restarting CG\n');
+                    end
+                    beta = 0;
+                    d = -g;
+                end
+
+                % Old restart rule:
+                %if beta < 0 || abs(gtgo)/(gotgo) >= 0.1 || g'*d >= 0
+
+            end
+            g_old = g;
+
+        case PCG % Preconditioned Non-Linear Conjugate Gradient
+
+            % Apply preconditioner to negative gradient
+            if isempty(precFunc)
+                % Use L-BFGS Preconditioner
+                if i == 1
+                    old_dirs = zeros(length(g),0);
+                    old_stps = zeros(length(g),0);
+                    Hdiag = 1;
+                    s = -g;
+                else
+                    [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+
+                    if useMex
+                        s = lbfgsC(-g,old_dirs,old_stps,Hdiag);
+                    else
+                        s = lbfgs(-g,old_dirs,old_stps,Hdiag);
+                    end
+                end
+            else % User-supplied preconditioner
+                s = precFunc(-g,x,varargin{:});
+            end
+
+            if i == 1
+                d = s;
+            else
+
+                if cgUpdate == 0
+                    % Preconditioned Fletcher-Reeves
+                    beta = (g'*s)/(g_old'*s_old);
+                elseif cgUpdate < 3
+                    % Preconditioned Polak-Ribiere
+                    beta = (g'*(s-s_old))/(g_old'*s_old);
+                else
+                    % Preconditioned Gilbert-Nocedal
+                    beta_FR = (g'*s)/(g_old'*s_old);
+                    beta_PR = (g'*(s-s_old))/(g_old'*s_old);
+                    beta = max(-beta_FR,min(beta_PR,beta_FR));
+                end
+                d = s + beta*d;
+
+                if g'*d > -tolX
+                    if debug
+                        fprintf('Restarting CG\n');
+                    end
+                    beta = 0;
+                    d = s;
+                end
+
+            end
+            g_old = g;
+            s_old = s;
+        case LBFGS % L-BFGS
+
+            % Update the direction and step sizes
+
+            if i == 1
+                d = -g; % Initially use steepest descent direction
+                old_dirs = zeros(length(g),0);
+                old_stps = zeros(length(d),0);
+                Hdiag = 1;
+            else
+                if Damped
+                    [old_dirs,old_stps,Hdiag] = dampedUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                else
+                    [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                end
+
+                if useMex
+                    d = lbfgsC(-g,old_dirs,old_stps,Hdiag);
+                else
+                    d = lbfgs(-g,old_dirs,old_stps,Hdiag);
+                end
+            end
+            g_old = g;
+
+        case QNEWTON % Use quasi-Newton Hessian approximation
+
+            if i == 1
+                d = -g;
+            else
+                % Compute difference vectors
+                y = g-g_old;
+                s = t*d;
+
+                if i == 2
+                    % Make initial Hessian approximation
+                    if initialHessType == 0
+                        % Identity
+                        if qnUpdate <= 1
+                            R = eye(length(g));
+                        else
+                            H = eye(length(g));
+                        end
+                    else
+                        % Scaled Identity
+                        if debug
+                            fprintf('Scaling Initial Hessian Approximation\n');
+                        end
+                        if qnUpdate <= 1
+                            % Use Cholesky of Hessian approximation
+                            R = sqrt((y'*y)/(y'*s))*eye(length(g));
+                        else
+                            % Use Inverse of Hessian approximation
+                            H = eye(length(g))*(y'*s)/(y'*y);
+                        end
+                    end
+                end
+
+                if qnUpdate == 0 % Use BFGS updates
+                    Bs = R'*(R*s);
+                    if Damped
+                        eta = .02;
+                        if y'*s < eta*s'*Bs
+                            if debug
+                                fprintf('Damped Update\n');
+                            end
+                            theta = min(max(0,((1-eta)*s'*Bs)/(s'*Bs - y'*s)),1);
+                            y = theta*y + (1-theta)*Bs;
+                        end
+                        R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),'-');
+                    else
+                        if y'*s > 1e-10
+                            R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),'-');
+                        else
+                            if debug
+                                fprintf('Skipping Update\n');
+                            end
+                        end
+                    end
+                elseif qnUpdate == 1 % Perform SR1 Update if it maintains positive-definiteness
+
+                    Bs = R'*(R*s);
+                    ymBs = y-Bs;
+                    if abs(s'*ymBs) >= norm(s)*norm(ymBs)*1e-8 && (s-((R\(R'\y))))'*y > 1e-10
+                        R = cholupdate(R,-ymBs/sqrt(ymBs'*s),'-');
+                    else
+                        if debug
+                            fprintf('SR1 not positive-definite, doing BFGS Update\n');
+                        end
+                        if Damped
+                            eta = .02;
+                            if y'*s < eta*s'*Bs
+                                if debug
+                                    fprintf('Damped Update\n');
+                                end
+                                theta = min(max(0,((1-eta)*s'*Bs)/(s'*Bs - y'*s)),1);
+                                y = theta*y + (1-theta)*Bs;
+                            end
+                            R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),'-');
+                        else
+                            if y'*s > 1e-10
+                                R = cholupdate(cholupdate(R,y/sqrt(y'*s)),Bs/sqrt(s'*Bs),'-');
+                            else
+                                if debug
+                                    fprintf('Skipping Update\n');
+                                end
+                            end
+                        end
+                    end
+                elseif qnUpdate == 2 % Use Hoshino update
+                    v = sqrt(y'*H*y)*(s/(s'*y) - (H*y)/(y'*H*y));
+                    phi = 1/(1 + (y'*H*y)/(s'*y));
+                    H = H + (s*s')/(s'*y) - (H*y*y'*H)/(y'*H*y) + phi*v*v';
+
+                elseif qnUpdate == 3 % Self-Scaling BFGS update
+                    ys = y'*s;
+                    Hy = H*y;
+                    yHy = y'*Hy;
+                    gamma = ys/yHy;
+                    v = sqrt(yHy)*(s/ys - Hy/yHy);
+                    H = gamma*(H - Hy*Hy'/yHy + v*v') + (s*s')/ys;
+                elseif qnUpdate == 4 % Oren's Self-Scaling Variable Metric update
+
+                    % Oren's method
+                    if (s'*y)/(y'*H*y) > 1
+                        phi = 1; % BFGS
+                        omega = 0;
+                    elseif (s'*(H\s))/(s'*y) < 1
+                        phi = 0; % DFP
+                        omega = 1;
+                    else
+                        phi = (s'*y)*(y'*H*y-s'*y)/((s'*(H\s))*(y'*H*y)-(s'*y)^2);
+                        omega = phi;
+                    end
+
+                    gamma = (1-omega)*(s'*y)/(y'*H*y) + omega*(s'*(H\s))/(s'*y);
+                    v = sqrt(y'*H*y)*(s/(s'*y) - (H*y)/(y'*H*y));
+                    H = gamma*(H - (H*y*y'*H)/(y'*H*y) + phi*v*v') + (s*s')/(s'*y);
+
+                elseif qnUpdate == 5 % McCormick-Huang asymmetric update
+                    theta = 1;
+                    phi = 0;
+                    psi = 1;
+                    omega = 0;
+                    t1 = s*(theta*s + phi*H'*y)';
+                    t2 = (theta*s + phi*H'*y)'*y;
+                    t3 = H*y*(psi*s + omega*H'*y)';
+                    t4 = (psi*s + omega*H'*y)'*y;
+                    H = H + t1/t2 - t3/t4;
+                end
+
+                if qnUpdate <= 1
+                    d = -R\(R'\g);
+                else
+                    d = -H*g;
+                end
+
+            end
+            g_old = g;
+
+        case NEWTON0 % Hessian-Free Newton
+
+            cgMaxIter = min(p,maxFunEvals-funEvals);
+            cgForce = min(0.5,sqrt(norm(g)))*norm(g);
+
+            % Set-up preconditioner
+            precondFunc = [];
+            precondArgs = [];
+            if cgSolve == 1
+                if isempty(precFunc) % Apply L-BFGS preconditioner
+                    if i == 1
+                        old_dirs = zeros(length(g),0);
+                        old_stps = zeros(length(g),0);
+                        Hdiag = 1;
+                    else
+                        [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                        if useMex
+                            precondFunc = @lbfgsC;
+                        else
+                            precondFunc = @lbfgs;
+                        end
+                        precondArgs = {old_dirs,old_stps,Hdiag};
+                    end
+                    g_old = g;
+                else
+                    % Apply user-defined preconditioner
+                    precondFunc = precFunc;
+                    precondArgs = {x,varargin{:}};
+                end
+            end
+
+            % Solve Newton system using cg and hessian-vector products
+            if isempty(HvFunc)
+                % No user-supplied Hessian-vector function,
+                % use automatic differentiation
+                HvFun = @autoHv;
+                HvArgs = {x,g,useComplex,funObj,varargin{:}};
+            else
+                % Use user-supplid Hessian-vector function
+                HvFun = HvFunc;
+                HvArgs = {x,varargin{:}};
+            end
+            
+            if useNegCurv
+                [d,cgIter,cgRes,negCurv] = conjGrad([],-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs,HvFun,HvArgs);
+            else
+                [d,cgIter,cgRes] = conjGrad([],-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs,HvFun,HvArgs);
+            end
+
+            funEvals = funEvals+cgIter;
+            if debug
+                fprintf('newtonCG stopped on iteration %d w/ residual %.5e\n',cgIter,cgRes);
+
+            end
+
+            if useNegCurv
+                if ~isempty(negCurv)
+                    %if debug
+                    fprintf('Using negative curvature direction\n');
+                    %end
+                    d = negCurv/norm(negCurv);
+                    d = d/sum(abs(g));
+                end
+            end
+
+        case NEWTON % Newton search direction
+
+            if cgSolve == 0
+                if HessianModify == 0
+                    % Attempt to perform a Cholesky factorization of the Hessian
+                    [R,posDef] = chol(H);
+
+                    % If the Cholesky factorization was successful, then the Hessian is
+                    % positive definite, solve the system
+                    if posDef == 0
+                        d = -R\(R'\g);
+
+                    else
+                        % otherwise, adjust the Hessian to be positive definite based on the
+                        % minimum eigenvalue, and solve with QR
+                        % (expensive, we don't want to do this very much)
+                        if debug
+                            fprintf('Adjusting Hessian\n');
+                        end
+                        H = H + eye(length(g)) * max(0,1e-12 - min(real(eig(H))));
+                        d = -H\g;
+                    end
+                elseif HessianModify == 1
+                    % Modified Incomplete Cholesky
+                    R = mcholinc(H,debug);
+                    d = -R\(R'\g);
+                elseif HessianModify == 2
+                    % Modified Generalized Cholesky
+                    if useMex
+                        [L D perm] = mcholC(H);
+                    else
+                        [L D perm] = mchol(H);
+                    end
+                    d(perm) = -L' \ ((D.^-1).*(L \ g(perm)));
+
+                elseif HessianModify == 3
+                    % Modified Spectral Decomposition
+                    [V,D] = eig((H+H')/2);
+                    D = diag(D);
+                    D = max(abs(D),max(max(abs(D)),1)*1e-12);
+                    d = -V*((V'*g)./D);
+                elseif HessianModify == 4
+                    % Modified Symmetric Indefinite Factorization
+                    [L,D,perm] = ldl(H,'vector');
+                    [blockPos junk] = find(triu(D,1));
+                    for diagInd = setdiff(setdiff(1:p,blockPos),blockPos+1)
+                        if D(diagInd,diagInd) < 1e-12
+                            D(diagInd,diagInd) = 1e-12;
+                        end
+                    end
+                    for blockInd = blockPos'
+                        block = D(blockInd:blockInd+1,blockInd:blockInd+1);
+                        block_a = block(1);
+                        block_b = block(2);
+                        block_d = block(4);
+                        lambda = (block_a+block_d)/2 - sqrt(4*block_b^2 + (block_a - block_d)^2)/2;
+                        D(blockInd:blockInd+1,blockInd:blockInd+1) = block+eye(2)*(lambda+1e-12);
+                    end
+                    d(perm) = -L' \ (D \ (L \ g(perm)));
+                else
+                    % Take Newton step if Hessian is pd,
+                    % otherwise take a step with negative curvature
+                    [R,posDef] = chol(H);
+                    if posDef == 0
+                        d = -R\(R'\g);
+                    else
+                        if debug
+                            fprintf('Taking Direction of Negative Curvature\n');
+                        end
+                        [V,D] = eig(H);
+                        u = V(:,1);
+                        d = -sign(u'*g)*u;
+                    end
+                end
+
+            else
+                % Solve with Conjugate Gradient
+                cgMaxIter = p;
+                cgForce = min(0.5,sqrt(norm(g)))*norm(g);
+
+                % Select Preconditioner
+                if cgSolve == 1
+                    % No preconditioner
+                    precondFunc = [];
+                    precondArgs = [];
+                elseif cgSolve == 2
+                    % Diagonal preconditioner
+                    precDiag = diag(H);
+                    precDiag(precDiag < 1e-12) = 1e-12 - min(precDiag);
+                    precondFunc = @precondDiag;
+                    precondArgs = {precDiag.^-1};
+                elseif cgSolve == 3
+                    % L-BFGS preconditioner
+                    if i == 1
+                        old_dirs = zeros(length(g),0);
+                        old_stps = zeros(length(g),0);
+                        Hdiag = 1;
+                    else
+                        [old_dirs,old_stps,Hdiag] = lbfgsUpdate(g-g_old,t*d,corrections,debug,old_dirs,old_stps,Hdiag);
+                    end
+                    g_old = g;
+                    if useMex
+                        precondFunc = @lbfgsC;
+                    else
+                        precondFunc = @lbfgs;
+                    end
+                    precondArgs = {old_dirs,old_stps,Hdiag};
+                elseif cgSolve > 0
+                    % Symmetric Successive Overelaxation Preconditioner
+                    omega = cgSolve;
+                    D = diag(H);
+                    D(D < 1e-12) = 1e-12 - min(D);
+                    precDiag = (omega/(2-omega))*D.^-1;
+                    precTriu = diag(D/omega) + triu(H,1);
+                    precondFunc = @precondTriuDiag;
+                    precondArgs = {precTriu,precDiag.^-1};
+                else
+                    % Incomplete Cholesky Preconditioner
+                    opts.droptol = -cgSolve;
+                    opts.rdiag = 1;
+                    R = cholinc(sparse(H),opts);
+                    if min(diag(R)) < 1e-12
+                        R = cholinc(sparse(H + eye*(1e-12 - min(diag(R)))),opts);
+                    end
+                    precondFunc = @precondTriu;
+                    precondArgs = {R};
+                end
+
+                % Run cg with the appropriate preconditioner
+                if isempty(HvFunc)
+                    % No user-supplied Hessian-vector function
+                    [d,cgIter,cgRes] = conjGrad(H,-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs);
+                else
+                    % Use user-supplied Hessian-vector function
+                    [d,cgIter,cgRes] = conjGrad(H,-g,cgForce,cgMaxIter,debug,precondFunc,precondArgs,HvFunc,{x,varargin{:}});
+                end
+                if debug
+                    fprintf('CG stopped after %d iterations w/ residual %.5e\n',cgIter,cgRes);
+                    %funEvals = funEvals + cgIter;
+                end
+            end
+
+        case TENSOR % Tensor Method
+
+            if numDiff
+                % Compute 3rd-order Tensor Numerically
+                [junk1 junk2 junk3 T] = autoTensor(x,useComplex,funObj,varargin{:});
+            else
+                % Use user-supplied 3rd-derivative Tensor
+                [junk1 junk2 junk3 T] = feval(funObj, x, varargin{:});
+            end
+            options_sub.Method = 'newton';
+            options_sub.Display = 'none';
+            options_sub.TolX = tolX;
+            options_sub.TolFun = tolFun;
+            d = minFunc(@taylorModel,zeros(p,1),options_sub,f,g,H,T);
+
+            if any(abs(d) > 1e5) || all(abs(d) < 1e-5) || g'*d > -tolX
+                if debug
+                    fprintf('Using 2nd-Order Step\n');
+                end
+                [V,D] = eig((H+H')/2);
+                D = diag(D);
+                D = max(abs(D),max(max(abs(D)),1)*1e-12);
+                d = -V*((V'*g)./D);
+            else
+                if debug
+                    fprintf('Using 3rd-Order Step\n');
+                end
+            end
+    end
+
+    if ~isLegal(d)
+        fprintf('Step direction is illegal!\n');
+        pause;
+        return
+    end
+
+    % ****************** COMPUTE STEP LENGTH ************************
+
+    % Directional Derivative
+    gtd = g'*d;
+
+    % Check that progress can be made along direction
+    if gtd > -tolX
+        exitflag=2;
+        msg = 'Directional Derivative below TolX';
+        break;
+    end
+
+    % Select Initial Guess
+    if i == 1
+        if method < NEWTON0
+            t = min(1,1/sum(abs(g)));
+        else
+            t = 1;
+        end
+    else
+        if LS_init == 0
+            % Newton step
+            t = 1;
+        elseif LS_init == 1
+            % Close to previous step length
+            t = t*min(2,(gtd_old)/(gtd));
+        elseif LS_init == 2
+            % Quadratic Initialization based on {f,g} and previous f
+            t = min(1,2*(f-f_old)/(gtd));
+        elseif LS_init == 3
+            % Double previous step length
+            t = min(1,t*2);
+        elseif LS_init == 4
+            % Scaled step length if possible
+            if isempty(HvFunc)
+                % No user-supplied Hessian-vector function,
+                % use automatic differentiation
+                dHd = d'*autoHv(d,x,g,0,funObj,varargin{:});
+            else
+                % Use user-supplid Hessian-vector function
+                dHd = d'*HvFunc(d,x,varargin{:});
+            end
+
+            funEvals = funEvals + 1;
+            if dHd > 0
+                t = -gtd/(dHd);
+            else
+                t = min(1,2*(f-f_old)/(gtd));
+            end
+        end
+
+        if t <= 0
+            t = 1;
+        end
+    end
+    f_old = f;
+    gtd_old = gtd;
+
+    % Compute reference fr if using non-monotone objective
+    if Fref == 1
+        fr = f;
+    else
+        if i == 1
+            old_fvals = repmat(-inf,[Fref 1]);
+        end
+
+        if i <= Fref
+            old_fvals(i) = f;
+        else
+            old_fvals = [old_fvals(2:end);f];
+        end
+        fr = max(old_fvals);
+    end
+
+    computeHessian = 0;
+    if method >= NEWTON
+        if HessianIter == 1
+            computeHessian = 1;
+        elseif i > 1 && mod(i-1,HessianIter) == 0
+            computeHessian = 1;
+        end
+    end
+
+    % Line Search
+    f_old = f;
+    if LS < 3 % Use Armijo Bactracking
+        % Perform Backtracking line search
+        if computeHessian
+            [t,x,f,g,LSfunEvals,H] = ArmijoBacktrack(x,t,d,f,fr,g,gtd,c1,LS,tolX,debug,doPlot,LS_saveHessianComp,funObj,varargin{:});
+        else
+            [t,x,f,g,LSfunEvals] = ArmijoBacktrack(x,t,d,f,fr,g,gtd,c1,LS,tolX,debug,doPlot,1,funObj,varargin{:});
+        end
+        funEvals = funEvals + LSfunEvals;
+
+    elseif LS < 6
+        % Find Point satisfying Wolfe
+
+        if computeHessian
+            [t,f,g,LSfunEvals,H] = WolfeLineSearch(x,t,d,f,g,gtd,c1,c2,LS,25,tolX,debug,doPlot,LS_saveHessianComp,funObj,varargin{:});
+        else
+            [t,f,g,LSfunEvals] = WolfeLineSearch(x,t,d,f,g,gtd,c1,c2,LS,25,tolX,debug,doPlot,1,funObj,varargin{:});
+        end
+        funEvals = funEvals + LSfunEvals;
+        x = x + t*d;
+
+    else
+        % Use Matlab optim toolbox line search
+        [t,f_new,fPrime_new,g_new,LSexitFlag,LSiter]=...
+            lineSearch({'fungrad',[],funObj},x,p,1,p,d,f,gtd,t,c1,c2,-inf,maxFunEvals-funEvals,...
+            tolX,[],[],[],varargin{:});
+        funEvals = funEvals + LSiter;
+        if isempty(t)
+            exitflag = -2;
+            msg = 'Matlab LineSearch failed';
+            break;
+        end
+
+        if method >= NEWTON
+            [f_new,g_new,H] = funObj(x + t*d,varargin{:});
+            funEvals = funEvals + 1;
+        end
+        x = x + t*d;
+        f = f_new;
+        g = g_new;
+    end
+
+    % Output iteration information
+    if verboseI
+        fprintf('%10d %10d %15.5e %15.5e %15.5e\n',i,funEvals*funEvalMultiplier,t,f,sum(abs(g)));
+    end
+
+    if logfile
+        fid = fopen(logfile, 'a');
+        if (fid > 0)
+            fprintf(fid, 'REPLACE_WITH_DASH_DASH %10d %10d %15.5e %15.5e %15.5e\n',i,funEvals*funEvalMultiplier,t,f,sum(abs(g)));
+            fclose(fid);
+        end
+    end
+
+    
+    % Output Function
+    if ~isempty(outputFcn)
+        callOutput(outputFcn,x,'iter',i,funEvals,f,t,gtd,g,d,sum(abs(g)),varargin{:});
+    end
+
+    % Update Trace
+    trace.fval(end+1,1) = f;
+    trace.funcCount(end+1,1) = funEvals;
+
+    % Check Optimality Condition
+    if sum(abs(g)) <= tolFun
+        exitflag=1;
+        msg = 'Optimality Condition below TolFun';
+        break;
+    end
+
+    % ******************* Check for lack of progress *******************
+
+    if sum(abs(t*d)) <= tolX
+        exitflag=2;
+        msg = 'Step Size below TolX';
+        break;
+    end
+
+
+    if abs(f-f_old) < tolX
+        exitflag=2;
+        msg = 'Function Value changing by less than TolX';
+        break;
+    end
+
+    % ******** Check for going over iteration/evaluation limit *******************
+
+    if funEvals*funEvalMultiplier > maxFunEvals
+        exitflag = 0;
+        msg = 'Exceeded Maximum Number of Function Evaluations';
+        break;
+    end
+
+    if i == maxIter
+        exitflag = 0;
+        msg='Exceeded Maximum Number of Iterations';
+        break;
+    end
+
+end
+
+if verbose
+    fprintf('%s\n',msg);
+end
+if nargout > 3
+    output = struct('iterations',i,'funcCount',funEvals*funEvalMultiplier,...
+        'algorithm',method,'firstorderopt',sum(abs(g)),'message',msg,'trace',trace);
+end
+
+% Output Function
+if ~isempty(outputFcn)
+    callOutput(outputFcn,x,'done',i,funEvals,f,t,gtd,g,d,sum(abs(g)),varargin{:});
+end
+
+end
+
+
+##### SOURCE END #####
+--></body></html>
