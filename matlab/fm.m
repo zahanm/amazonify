@@ -9,9 +9,8 @@ dataset_size = size(data, 1);
 
 % separate train_test sets
 num_test = round(dataset_size * 0.1);
-shuffled_idx = randperm(dataset_size);
-test_data = data(shuffled_idx(1:num_test), :);
-train_data = data(shuffled_idx(num_test+1:end), :);
+test_data = data(1:num_test, :);
+train_data = data(num_test+1:end, :);
 
 train_product_ids = train_data(:, 1);
 train_user_ids= train_data(:, 2);
@@ -24,7 +23,7 @@ num_users = max(train_user_ids);
 latent_size = 2;
 
 % initialize parameters
-theta = 0.001*randn((num_products + num_users)*latent_size, 1);
+theta = 0.001*ones((num_products + num_users)*latent_size, 1);
 
 %% if using fmincg
 % options = optimset('GradObj', 'on', 'MaxIter', 50);
@@ -33,10 +32,10 @@ theta = 0.001*randn((num_products + num_users)*latent_size, 1);
 
 %% if using minFunc
 options.Method = 'lbgfs';
-options.maxIter = 40;	
+options.maxIter = 1;	
 options.display = 'off';
 options.DerivativeCheck = 'on';
-[cost, grad] = minFunc ( @(t) factorization_cost(t, num_products, num_users, ...
+[opt_theta, cost] = minFunc ( @(t) factorization_cost(t, num_products, num_users, ...
     latent_size, train_product_ids, train_user_ids, train_ratings), theta, options);
                               
 

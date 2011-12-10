@@ -18,12 +18,16 @@ function [cost, grad] = factorization_cost(theta, num_products, num_users, ...
     % gradient
     grad_p = zeros(size(p));
     grad_u = zeros(size(u));
-    delta_p = bsxfun(@times, rating_diff, h);
-    delta_u = bsxfun(@times, rating_diff, w);
+   
+   
+    delta_p = bsxfun(@times, rating_diff, w);
+    delta_u = bsxfun(@times, rating_diff, h);
     for i = 1:length(ratings);
-        grad_p(p_ids(i), :) = grad_p(p_ids(i), :) + delta_p(i, :);
-        grad_u(u_ids(i), :) = grad_u(u_ids(i), :) + delta_u(i, :);
+        
+        grad_p(p_ids(i), :) = grad_p(p_ids(i), :) - 2*delta_p(i, :);
+        grad_u(u_ids(i), :) = grad_u(u_ids(i), :) - 2*delta_u(i, :);
+                
     end
     grad = [grad_p(:); grad_u(:)];
-    % disp(norm(grad))
+    
 end
