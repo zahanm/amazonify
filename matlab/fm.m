@@ -19,7 +19,7 @@ latent_size = 2;
 lambda = 0.1; % regularization constant
 
 % initialize parameters
-theta = 0.001*ones((num_products + num_users)*latent_size, 1);
+theta = 0.001*randn((num_products + num_users)*latent_size, 1);
 
 %% if using fmincg
 % options = optimset('GradObj', 'on', 'MaxIter', 50);
@@ -28,7 +28,7 @@ theta = 0.001*ones((num_products + num_users)*latent_size, 1);
 
 %% if using minFunc
 options.Method = 'lbgfs';
-options.maxIter = 1;	
+options.maxIter = 200;	
 options.display = 'off';
 options.DerivativeCheck = 'on';
 addpath minFunc/
