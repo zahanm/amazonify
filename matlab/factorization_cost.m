@@ -1,9 +1,6 @@
 function [cost, grad] = factorization_cost(theta, num_products, num_users, ... 
     latent_size, lambda, train_data)
-        
-    % May need to scale cost and gradient by (1 / number of training
-    % examples)
-    
+ 
     p_ids = train_data(:, 1);
     u_ids = train_data(:, 2);
     ratings = train_data(:, 3);

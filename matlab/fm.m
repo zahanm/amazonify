@@ -34,9 +34,14 @@ options.display = 'on';
 addpath minFunc/
 [opt_theta, cost] = minFunc ( @(t) factorization_cost(t, num_products, num_users, ...
     latent_size, lambda, train_data), theta, options);
-                              
+%% Results
 p = reshape(opt_theta(1:num_products*latent_size), num_products, latent_size);
 u = reshape(opt_theta(num_products*latent_size + 1: end), num_users, latent_size);
-predictions = p * u';
-predictions = round(predictions);
+
+test_product_idx = test_data(:, 1);
+test_user_idx = test_data(:, 2);
+test_ratings = test_data(:, 3);
+
+predicted_ratings = p(test_product_idx, :) * u(test_user_idx, :)';
+
 
