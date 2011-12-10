@@ -1,15 +1,16 @@
 clear all; close all;
 
-%% Load data
+%% Load train
+train_data = dlmread('../data/train_matrix_750.txt');
+% shift the customer index by 1 for matlab indexing
+train_data(:, 2) = train_data(:, 2) + 1;
 
-% work with toy datasets for now
-data = dlmread('../data/toy_matrix.txt');
-dataset_size = size(data, 1);
 
-% separate train_test sets
-num_test = round(dataset_size * 0.1);
-test_data = data(1:num_test, :);
-train_data = data(num_test+1:end, :);
+%% Load test
+NUM_LINES_TEST = 750;
+test_data = dlmread('../data/test_matrix_750.txt', '\t', [0, 0, NUM_LINES_TEST - 1, 2]);
+% shift the customer index by 1 for matlab indexing
+test_data(:, 2) = test_data(:, 2) + 1;
 
 
 %% Intialize model parameters
@@ -30,7 +31,6 @@ theta = 0.001*randn((num_products + num_users)*latent_size, 1);
 options.Method = 'lbgfs';
 options.maxIter = 500;	
 options.display = 'on';
-options.DerivativeCheck = 'on';
 addpath minFunc/
 [opt_theta, cost] = minFunc ( @(t) factorization_cost(t, num_products, num_users, ...
     latent_size, lambda, train_data), theta, options);
