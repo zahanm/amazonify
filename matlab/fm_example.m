@@ -15,8 +15,8 @@ train_data = data(num_test+1:end, :);
 %% Intialize model parameters
 num_products = max(data(:, 1));
 num_users = max(data(:, 2));
-latent_size = 2;
-lambda = 0.01; % regularization constant
+latent_size = 10;
+lambda = 0.05; % regularization constant
 
 % initialize parameters
 theta = 0.001*randn((num_products + num_users)*latent_size, 1);
