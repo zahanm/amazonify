@@ -167,8 +167,8 @@ def dot_product(vec_a, vec_b, avoidKey=None):
 
 
 if __name__ == '__main__':
-    train_file = 'data/pruned_matrix_train.txt.gz'    
-    test_file = 'data/pruned_matrix_test.txt.gz'
+    train_file = 'data/train_matrix_7500.txt.gz'    
+    test_file = 'data/test_matrix_7500.txt.gz'
 
     use_gzip = False
 
