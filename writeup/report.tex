@@ -46,25 +46,68 @@ effectiveness in a recommendation system.
 In this paper, we focus on collaborative filtering methods for recommendations. 
 Collaborative filtering is the term applied to techniques that analyze the 
 relationships between users and products in a large dataset and make 
-recommendations based on similarity between nodes. Similarity depends only on
+recommendations based on existing connections between nodes \cite{bib:recsys}.
+One common technique in collaborative filtering is to use existing connections 
+to make judgments about similar products and users. Similarity depends only on 
 history -- for example, two users may be similar if they have purchased many 
 of the same items, so one user's rating can be used to infer a rating for 
-another. The alternative to collaborative filtering is content filtering, which 
-creates features for users and products to assess compatibility. In contrast, 
-collaborative filtering does not need to create features like genre or subject, 
-so it is domain-independent [cite]. 
+another. 
 
-\subsection{Previous Work -- needs more elaboration}
+The alternative to collaborative filtering is content filtering, which 
+creates features for users and products to assess compatibility. These 
+features, which in a book recommendation system might be things like genre or 
+subject, will be scored for both users and products \cite{bib:recsys}. This 
+makes content filtering highly domain-specific. 
+In contrast, collaborative filtering does not need to create such features, 
+so it is domain-independent. It is sufficient in collorative filtering to have 
+only a matrix of users to products, where each entry in the matrix is some 
+scalar indicator of the past relationship between a user and a product.
+
+\subsection{Previous Work}
 Collaborative filtering has enjoyed a long popularity in recommendations tasks. 
 It was first used commercially in 1992 in a system called Tapestry to 
-recommend newsgroup messages to readers [Cite]. Neighborhood-based methods, 
-which we explore in two of our models, have been incorporated by Amazon into 
-its own recommendation engine [Cite]. Matrix factorization, another model we 
-explore, has also been highly successful. [Cite] Modern recommendation systems 
-often use a combination of collaborative filtering, content-based filtering, 
-and matrix factorization, often using multiple methods from each category. 
-The top entrants in the Netflix Prize used such hybrid approaches, employing 
-as many as 100 different techniques. [Cite]
+recommend newsgroup messages to readers \cite{bib:tapestry}. In this system, 
+feedback and annotations from existing user-document relationships are used 
+to select interesting documents for other users. This system first uses the 
+term \emph{collaborative filtering} to indicate that people implicitly 
+collaborate by recording their reactions to documents, enabling 
+others to make decisions based on those reactions.
+
+Our work is based on two broad categories of collaborative filtering: 
+similarity methods and matrix factorization \cite{bib:recsys2}. Similarity 
+methods make recommendations by comparing the similarity between users or 
+products. In a neighborhood-based similarity model, users are compared to each 
+other to determine their nearest neighbors based on their histories. Then, to 
+make a prediction for user $u$'s opinion on product $p$, the model looks at the 
+opinions of the neighbors of $u$ regarding $p$. Another similarity model is the 
+item-based model, which examines item similarity instead of user similarity. 
+This approach has been the basis for Amazon's own recommendation engine
+ \cite{bib:amazon}. Its advantage is that product similarities can be computed 
+offline, and when a user needs a product recommendation, the system performs 
+a fast lookup of items similar to ones in the user's history . This speed 
+has been beneficial for scalability in Amazon's large purchase network. 
+
+The second type of collaborative filtering is model-based methods, in our case, 
+matrix factorization. Matrix factorization does not use history to  model 
+similarity like the previously discussed models. Instead, it uses past ratings 
+to estimate the parameters of a statistical model for user-product 
+relationships \cite{bib:matrixfact}. Users and products are represented as 
+vectors in a latent vector space $R^f$. A numerical estimate for the 
+opinion of  user $u$ on product $p$ can be obtained by taking the 
+cross product of vectors for $u$ and $p$. The values of the latent dimensions 
+are learned during a training stage by minimizing the error between known and 
+predicted ratings.
+
+Modern recommendation systems are often a combination of 
+collaborative filtering, content-based filtering, and matrix factorization. 
+One way to create a hybrid model is simply to take the outcomes of several 
+approaches and merge them by taking a weighted average. Other 
+hybrid techniques incorporate the previously discussed models with other
+machine learning methods, such as classification \cite{bib:recsys2}. 
+The ways to combine the approaches are numerous, and it is common for 
+a recommendation system to incorporate a large number of strategies. 
+The top entrants in the Netflix Prize used a hybrid algorithm with over 100 
+techniques \cite{bib:bellkor}.
 
 \subsection{Our project}
 This project explores some of the most popular ratings prediction methods using 
@@ -80,9 +123,8 @@ task and the strengths of each of the models.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Dataset}
 \label{sec:dataset}
-\subsection{Preliminary Yelp dataset}
 
-\subsection{Amazon dataset}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Models}
@@ -168,21 +210,35 @@ Always predict 4 & \multicolumn{2}{|c|}{0.3039}  \tabularnewline
 \section{Conclusion}
 
 
+\begin{thebibliography}{99}
 
-%% \begin{thebibliography}{99}
-%% \bibitem{tutorial}
-%% Smola, A. J., and Scholkopf, B., (1998), ``A Tutorial on Support Vector Regression,'' NeuroCOLT2 Technical Report Series.
+\bibitem{bib:recsys}
+Adomavicius, G., Tuzhilin, A. (2005). Toward the next generation of recommender systems: a survey of the state-of-the-art and possible extensions. Knowledge and Data Engineering, IEEE Transactions on , 17(6),  734- 749.
 
-%% \bibitem{joac}
-%% Joachims, T., (2002), ``Optimizing Search Engines using Clickthrough Data,'' ACM Conference on Knowledge Discovery and Data Mining (KDD).
+\bibitem{bib:matrixfact}
+Bell, R., Koren, Y., Volinsky, C. (2009). Matrix factorization techniques for recommender systems. IEEE Computer 42(8):30-37
 
-%% \bibitem{coord1}
-x%% Chang, K.W., Cho, J.H, and Chih, J.L., (2008), ``Coordinate Descent Method for Large-scale L2-loss Linear Support Vector Machines,'' Journal of Machine Learning Research 9 (2008),  pp.1369-1398.
+\bibitem{bib:bellkor}
+Bell, R., Koren, Y., Volinsky, C. (2009). 
+The BellKor solution to the Netﬂix Prize. Technical Report, AT\&T Labs 
+Research, 2007b. 
+http://www.netflixprize.com/assets/ProgressPrize2007\_KorBell.pdf
 
-%% \bibitem{coord2}
-%% Chang, K.W., Cho, J.H, Chih, J.L., Sathiya Keerthi, S., and Sundararajan, S. (2008), ``A Dual Coordinate Descent Method for Large-scale Linear SVM,'' 25$^{th}$ International Conference on Machine Learning, Helsinki, Finland.
 
+\bibitem{bib:tapestry}
+Goldberg, D., Nichols, D., Oki, B., Terry, D. (1992). 
+Using collaborative filtering to weave an information tapestry. 
+Communications of the Association of Computing Machinery, 35(12), 61-70.
 
-%% \end{thebibliography}
+\bibitem{bib:amazon}
+Linden, G., Smith, B., York, J. (2003). Amazon.com recommendations: Item-to-item collaborative filtering. IEEE Internet
+Computing, 7(1), 76-80.
+
+\bibitem{bib:recsys2}
+Melville, P., Sindhwani, V. (2010).
+Recommender Systems. The Encyclopedia of Machine Learning. 
+http://www.prem-melville.com/publications/recommender-systems-eml2010.pdf
+
+\end{thebibliography}
 
 \end{document}
