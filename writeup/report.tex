@@ -52,9 +52,82 @@ effectiveness in a recommendation system.
 \section{Models}
 \label{sec:models}
 
+\subsection{Neighborhood-based model}
+\subsection{Modified neighborhood model}
+\subsection{Item-based model}
+\subsection{Matrix factorization}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Results}
+\section{Results and Discussion}
 \label{sec:results}
+
+We report the results of our models on the full Amazon dataset and on our 
+high-activity subset. We measure performance over the test sets using 
+root-mean-square error. The errors are normalized by dividing by 4, the maximum 
+difference between the highest and lowest star ratings possible. However, 
+in the interest of preserving granularity for model comparison, predicted
+fractional ratings are not rounded to the nearest integer before calculating 
+the errors. 
+
+\subsection{Neighborhood-based model}
+\subsubsection{Full dataset}
+The results of the neighborhood-based model on the full dataset are shown in 
+table ?? and Figure ?? below.
+
+%% \begin{figure}[htp]
+%% \includegraphics[scale=0.5]{pert.eps}
+%% \caption{Effect of perturbation $(\epsilon)$ on the Average Error}
+%% \label{fig:pert}
+%% \end{figure}
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|c|}
+\cline{2-3}
+
+\multicolumn{1}{c|}{} & \vbox{\hbox{\strut Neighborhood model}} 
+& \vbox{\hbox{\strut Modified }\hbox{\strut neighborhood model}} \tabularnewline \hline
+$k$ = 1 & 0.3497 & 0.387025 \tabularnewline
+$k$ = 3 &  0.3374 & 0.354391 \tabularnewline
+$k$ = 5 & 0.3348 & 0.344786 \tabularnewline
+$k$ = 10 & 0.3262 & 0.339663 \tabularnewline
+$k$ = 25  & 0.3220 & 0.334604 \tabularnewline
+\hline
+All other users & \multicolumn{2}{|c|}{?}  \tabularnewline
+\hline
+Always predict 4 & \multicolumn{2}{|c|}{0.3211}  \tabularnewline
+\hline
+\end{tabular}
+\caption{Neighborhood models, full dataset}
+\end{table}
+
+\subsubsection{High-activity dataset}
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|c|}
+\cline{2-3}
+
+
+\multicolumn{1}{c|}{} & \vbox{\hbox{\strut Neighborhood model}} 
+& \vbox{\hbox{\strut Modified }\hbox{\strut neighborhood model}} \tabularnewline \hline
+$k$ = 1 &  & \tabularnewline
+$k$ = 3 &  & \tabularnewline
+$k$ = 5 &  & \tabularnewline
+$k$ = 10 & & \tabularnewline
+$k$ = 25  &  & \tabularnewline
+\hline
+All other users & \multicolumn{2}{|c|}{?}  \tabularnewline
+\hline
+Always predict 4 & \multicolumn{2}{|c|}{?}  \tabularnewline
+\hline
+\end{tabular}
+\caption{Neighborhood models, full dataset}
+\end{table}
+
+
+\subsection{Item-based model}
+\subsection{Matrix factorization}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
