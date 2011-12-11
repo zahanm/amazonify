@@ -123,8 +123,52 @@ task and the strengths of each of the models.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Dataset}
 \label{sec:dataset}
-Our data comes from a collection of Amazon product purchase metadata from 
-the Stanford Large Network Dataset Collection. The dataset contains over 
+We consider two data collections for this project. The first is a set of business
+review information from Yelp.com. The second is a collection of Amazon product 
+purchase metadata from the Stanford Large Network Dataset Collection.
+
+Yelp.com is a review aggregator site where users review local
+businesses. The dataset contains information about several different types of
+business venues including restaurants, shops,
+nightlife, and beauty spas. A reviewer assigns a 1-5 star rating to a venue and
+writes a text review. Other members then have the opportunity to vote on the
+usefulness of the review (positive votes only).
+
+Since this dataset is provided by Yelp.com specifically for academic teams to
+experiment with algorithms, and not for actual prediction usage, we found the
+dataset not large enough to meet our models' training requirements.
+Consisting of review information for businesses around 30 universities,
+with a total of just 7500 businesses, key characteristics of this set
+are in Table~\ref{table:yelpstats}.
+
+As appropriate, we modelled this data using a bipartite graph with users and
+businesses as vertices, and the reviews represented as edges.
+We built our system to predict the numerical value of the star
+rating that a user would bestow upon a business. Unfortunately, we quickly
+found that we would not be able to produce robust prediction results from
+this dataset as we will discuss in Section~\ref{sec:results}.
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Users &65,888 \tabularnewline \hline
+Reviews &152,327 \tabularnewline \hline
+Businesses &9600 \tabularnewline \hline
+Reviews per user &Mean = 2.31, Median = 1, STD = 3.83 
+\tabularnewline \hline
+Reviews per business &Mean = 22.08, Median = 6, STD = 57.4 
+\tabularnewline \hline
+Average rating given &Mean = 3.64, Median = 4 \tabularnewline
+in a review &Mode = 4, STD = 1.21 
+\tabularnewline \hline
+
+\end{tabular}
+\caption{ Yelp.com Dataset statistics }
+\label{table:yelpstats}
+\end{table}
+
+The Amazon dataset was considerably larger, with over 
 500,000 product entitities, including product title, salesrank, and ratings 
 information. For our project, we are concerned with the ratings assigned 
 by users to products. We parsed the dataset to a bipartite review 
@@ -133,9 +177,33 @@ users to products. After extracting only the relevant data, we found many
 duplicate entries where a user $u$ has reviewed a product $p$ several times, 
 sometimes assigning different ratings each time. After eliminating the 
 duplicates, we reached a dataset with properties shown in 
-Table~\ref{table:dataset}.
+Table~\ref{table:amazonstats}.
 
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Users &1,555,171 \tabularnewline \hline
+Reviews &6,285,389 \tabularnewline \hline
+Products &548,551 \tabularnewline \hline
+Reviews per user &Mean = 4.04, Median = 2, STD = 68
+\tabularnewline \hline
+Reviews per product &Mean = 11.45, Median = 2, STD = 55.5 
+\tabularnewline \hline
+Average rating given &Mean = 4.15, Median = 5 \tabularnewline
+in a review &STD = 1.2567
+\tabularnewline \hline
 
+\end{tabular}
+\caption{ Amazon.com Dataset statistics }
+\label{table:amazonstats}
+\end{table}
+
+The review densities followed a clean power law distribution as can be seen
+in Figure~\ref{fig:userhist} for the users and Figure~\ref{fig:producthist}
+for the products. As far as the ratings are concerned however, we see in
+Figure~\ref{fig:ratings} that they skew towards the high end with a bimodal
+general form.
 
 \begin{figure}[h]
 \includegraphics[scale=0.6]{images/ratings.pdf}
