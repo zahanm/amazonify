@@ -177,55 +177,64 @@ fractional ratings are not rounded to the nearest integer before calculating
 the errors. 
 
 \subsection{Neighborhood-based model}
-\subsubsection{Full dataset}
-The results of the neighborhood-based model on the full dataset are shown in 
-table ?? and Figure ?? below.
-
-
-\begin{table}[htb]
-\centering
-\begin{tabular}{|c|c|c|}
-\cline{2-3}
-
-\multicolumn{1}{c|}{} & \vbox{\hbox{\strut Neighborhood model}} 
-& \vbox{\hbox{\strut Modified }\hbox{\strut neighborhood model}} \tabularnewline \hline
-$k$ = 1 & 0.3497 & 0.3870 \tabularnewline
-$k$ = 3 &  0.3374 & 0.3544 \tabularnewline
-$k$ = 5 & 0.3348 & 0.3448 \tabularnewline
-$k$ = 10 & 0.3262 & 0.3397 \tabularnewline
-$k$ = 25  & 0.3220 & 0.3346 \tabularnewline
-\hline
-All other users & \multicolumn{2}{|c|}{?}  \tabularnewline
-\hline
-Always predict 4 & \multicolumn{2}{|c|}{0.3211}  \tabularnewline
-\hline
-\end{tabular}
-\caption{Neighborhood models, full dataset}
-\end{table}
-
-\subsubsection{High-activity dataset}
+\subsubsection{Full Amazon dataset}
+The results of the neighborhood-based model on the full full Amazon dataset 
+are shown in Table \ref{table:modelone_full} and Figure \ref{fig:modelone_full}.
 
 \begin{table}[htb]
 \centering
-\begin{tabular}{|c|c|c|}
-\cline{2-3}
+\begin{tabular}{|c|c|}
+\cline{2-2}
 
-\multicolumn{1}{c|}{} & \vbox{\hbox{\strut Neighborhood model}} 
-& \vbox{\hbox{\strut Modified }\hbox{\strut neighborhood model}} \tabularnewline \hline
-$k$ = 1 &  & 0.1397 \tabularnewline
-$k$ = 3 &  & 0.1864 \tabularnewline
-$k$ = 5 &  & 0.2180 \tabularnewline
-$k$ = 10 & & 0.2493 \tabularnewline
-$k$ = 25  &  & 0.2645 \tabularnewline
+\multicolumn{1}{c|}{}  & {Normalized RMSE} \tabularnewline \hline
+$k$ = 1 & 0.3497  \tabularnewline
+$k$ = 3 &  0.3374 \tabularnewline
+$k$ = 5 & 0.3348  \tabularnewline
+$k$ = 10 & 0.3262  \tabularnewline
+$k$ = 25  & 0.3220  \tabularnewline
 \hline
-All other users & \multicolumn{2}{|c|}{}  \tabularnewline
-\hline
-Always predict 4 & \multicolumn{2}{|c|}{0.3039}  \tabularnewline
+Always predict 4 & 0.3211 \tabularnewline 
+Average of all other users & 0.3007 \tabularnewline
+
 \hline
 \end{tabular}
-\caption{Neighborhood models, full dataset}
+\caption{Neighborhood model, full Amazon dataset}
+\label{table:modelone_full}
 \end{table}
 
+\begin{figure}[h]
+\includegraphics[scale=0.6]{images/modelone_full.pdf}
+\caption{Neighborhood model, full Amazon dataset}
+\label{fig:modelone_full}
+\end{figure}
+
+
+\subsubsection{Amazon high-activity dataset}
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|}
+\cline{2-2}
+
+\multicolumn{1}{c|}{}  & {Normalized RMSE} \tabularnewline \hline
+$k$ = 1 & 0.1352  \tabularnewline
+$k$ = 3 & 0.1380 \tabularnewline
+$k$ = 5 &  0.1410 \tabularnewline
+$k$ = 10 &  0.1467 \tabularnewline
+$k$ = 25  &  0.1549 \tabularnewline
+\hline
+Always predict 4 & 0.3049 \tabularnewline 
+Average of all other users & 0.2513 \tabularnewline
+\hline
+\end{tabular}
+\caption{Neighborhood model, high-activity dataset}
+\label{table:modelone_subset}
+\end{table}
+
+\begin{figure}[h]
+\includegraphics[scale=0.6]{images/modelone_subset.pdf}
+\caption{Neighborhood model, high-activity dataset}
+\label{fig:modelone_subset}
+\end{figure}
 
 \subsection{Item-based model}
 \subsection{Matrix factorization}
