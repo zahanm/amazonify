@@ -2,7 +2,7 @@ clear all; close all;
 
 
 %% Load train
-train_data = dlmread('../data/train_matrix_750.txt');
+train_data = dlmread('../data/pruned_matrix.txt');
 % shift the customer index by 1 for matlab indexing
 train_data(:, 2) = train_data(:, 2) + 1;
 train_matrix = sparse(train_data(:, 1), train_data(:, 2), train_data(:, 3));
@@ -11,8 +11,8 @@ clear train_data
 
 
 %% Load test
-NUM_LINES_TEST = 750;
-test_data = dlmread('../data/test_matrix_750.txt', '\t', [0, 0, NUM_LINES_TEST - 1, 2]);
+NUM_LINES_TEST = 7500;
+test_data = dlmread('../data/pruned_matrix_1.txt', '\t', [0, 0, NUM_LINES_TEST - 1, 2]);
 % shift the customer index by 1 for matlab indexing
 test_data(:, 2) = test_data(:, 2) + 1;
 

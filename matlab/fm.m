@@ -1,14 +1,14 @@
 clear all; close all;
 
 %% Load train
-train_data = dlmread('../data/train_matrix_7500.txt');
+train_data = dlmread('../data/pruned_matrix.txt');
 % shift the customer index by 1 for matlab indexing
 train_data(:, 2) = train_data(:, 2) + 1;
 
 
 %% Load test
 NUM_LINES_TEST = 7500;
-test_data = dlmread('../data/test_matrix_7500.txt', '\t', [0, 0, NUM_LINES_TEST - 1, 2]);
+test_data = dlmread('../data/pruned_matrix_1.txt', '\t', [0, 0, NUM_LINES_TEST - 1, 2]);
 % shift the customer index by 1 for matlab indexing
 test_data(:, 2) = test_data(:, 2) + 1;
 
@@ -16,8 +16,8 @@ test_data(:, 2) = test_data(:, 2) + 1;
 %% Intialize model parameters
 num_products = max(train_data(:, 1));
 num_users = max(train_data(:, 2));
-latent_size = 3;
-lambda = 0.01; % regularization constant
+latent_size = 10;
+lambda = 0.001; % regularization constant
 
 % initialize parameters
 theta = 0.001*randn((num_products + num_users)*latent_size, 1);
