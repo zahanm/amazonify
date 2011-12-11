@@ -1,0 +1,153 @@
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf}  
+\IEEEoverridecommandlockouts                              % This command is only
+                                                          % needed if you want to
+                                                          % use the \thanks command
+\overrideIEEEmargins
+% See the \addtolength command later in the file to balance the column lengths
+% on the last page of the document
+
+% The following packages can be found on http:\\www.ctan.org
+\usepackage{graphics} % for pdf, bitmapped graphics files
+\usepackage{epsfig} % for postscript graphics files
+\usepackage{amsmath} % assumes amsmath package installed
+\usepackage{amssymb}  % assumes amsmath package installed
+\usepackage{hyperref} %For hyperlinks
+\usepackage{float} % To place graphs
+\usepackage{epstopdf}
+\usepackage{mathrsfs}
+
+
+\title{\LARGE \bf
+Recommendation Systems for Amazon.com
+}
+\author{Nikhil Johri, Zahan Malkani, and Ying Wang
+}
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+Modern retailers frequently use recommendation systems to suggest products of 
+interest to a collection of consumers. A closely related task is ratings 
+prediction, in which the system predicts a numerical rating that a 
+user $u$ will assign to a product $p$. In this paper, we build three ratings 
+prediction models for a dataset of products and users from Amazon.com. We 
+evaluate the strengths and weaknesses of each model, and discuss their 
+effectiveness in a recommendation system.
+
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Dataset}
+\label{sec:dataset}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Models}
+\label{sec:models}
+
+\subsection{Neighborhood-based model}
+\subsection{Modified neighborhood model}
+\subsection{Item-based model}
+\subsection{Matrix factorization}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results and Discussion}
+\label{sec:results}
+
+We report the results of our models on the full Amazon dataset and on our 
+high-activity subset. We measure performance over the test sets using 
+root-mean-square error. The errors are normalized by dividing by 4, the maximum 
+difference between the highest and lowest star ratings possible. However, 
+in the interest of preserving granularity for model comparison, predicted
+fractional ratings are not rounded to the nearest integer before calculating 
+the errors. 
+
+\subsection{Neighborhood-based model}
+\subsubsection{Full dataset}
+The results of the neighborhood-based model on the full dataset are shown in 
+table ?? and Figure ?? below.
+
+%% \begin{figure}[htp]
+%% \includegraphics[scale=0.5]{pert.eps}
+%% \caption{Effect of perturbation $(\epsilon)$ on the Average Error}
+%% \label{fig:pert}
+%% \end{figure}
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|c|}
+\cline{2-3}
+
+\multicolumn{1}{c|}{} & \vbox{\hbox{\strut Neighborhood model}} 
+& \vbox{\hbox{\strut Modified }\hbox{\strut neighborhood model}} \tabularnewline \hline
+$k$ = 1 & 0.3497 & 0.387025 \tabularnewline
+$k$ = 3 &  0.3374 & 0.354391 \tabularnewline
+$k$ = 5 & 0.3348 & 0.344786 \tabularnewline
+$k$ = 10 & 0.3262 & 0.339663 \tabularnewline
+$k$ = 25  & 0.3220 & 0.334604 \tabularnewline
+\hline
+All other users & \multicolumn{2}{|c|}{?}  \tabularnewline
+\hline
+Always predict 4 & \multicolumn{2}{|c|}{0.3211}  \tabularnewline
+\hline
+\end{tabular}
+\caption{Neighborhood models, full dataset}
+\end{table}
+
+\subsubsection{High-activity dataset}
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|c|}
+\cline{2-3}
+
+
+\multicolumn{1}{c|}{} & \vbox{\hbox{\strut Neighborhood model}} 
+& \vbox{\hbox{\strut Modified }\hbox{\strut neighborhood model}} \tabularnewline \hline
+$k$ = 1 &  & \tabularnewline
+$k$ = 3 &  & \tabularnewline
+$k$ = 5 &  & \tabularnewline
+$k$ = 10 & & \tabularnewline
+$k$ = 25  &  & \tabularnewline
+\hline
+All other users & \multicolumn{2}{|c|}{?}  \tabularnewline
+\hline
+Always predict 4 & \multicolumn{2}{|c|}{?}  \tabularnewline
+\hline
+\end{tabular}
+\caption{Neighborhood models, full dataset}
+\end{table}
+
+
+\subsection{Item-based model}
+\subsection{Matrix factorization}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+
+
+
+%% \begin{thebibliography}{99}
+%% \bibitem{tutorial}
+%% Smola, A. J., and Scholkopf, B., (1998), ``A Tutorial on Support Vector Regression,'' NeuroCOLT2 Technical Report Series.
+
+%% \bibitem{joac}
+%% Joachims, T., (2002), ``Optimizing Search Engines using Clickthrough Data,'' ACM Conference on Knowledge Discovery and Data Mining (KDD).
+
+%% \bibitem{coord1}
+x%% Chang, K.W., Cho, J.H, and Chih, J.L., (2008), ``Coordinate Descent Method for Large-scale L2-loss Linear Support Vector Machines,'' Journal of Machine Learning Research 9 (2008),  pp.1369-1398.
+
+%% \bibitem{coord2}
+%% Chang, K.W., Cho, J.H, Chih, J.L., Sathiya Keerthi, S., and Sundararajan, S. (2008), ``A Dual Coordinate Descent Method for Large-scale Linear SVM,'' 25$^{th}$ International Conference on Machine Learning, Helsinki, Finland.
+
+
+%% \end{thebibliography}
+
+\end{document}
