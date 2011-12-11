@@ -123,6 +123,19 @@ task and the strengths of each of the models.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Dataset}
 \label{sec:dataset}
+Our data comes from a collection of Amazon product purchase metadata from 
+the Stanford Large Network Dataset Collection. The dataset contains over 
+500,000 product entitities, including product title, salesrank, and ratings 
+information. For our project, we are concerned with the ratings assigned 
+by users to products. We parsed the dataset to a bipartite review 
+graph whose nodes are products and users and edges are the ratings given by 
+users to products. After extracting only the relevant data, we found many 
+duplicate entries where a user $u$ has reviewed a product $p$ several times, 
+sometimes assigning different ratings each time. After eliminating the 
+duplicates, we reached a dataset with properties shown in 
+Table~\ref{table:dataset}.
+
+
 
 \begin{figure}[h]
 \includegraphics[scale=0.6]{images/ratings.pdf}
