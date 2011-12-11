@@ -159,10 +159,121 @@ Table~\ref{table:dataset}.
 \section{Models}
 \label{sec:models}
 
+We plan to model the star rating a given user would assign to a given
+venue or product. To begin, we will model our training data as a bipartite
+graph, where each user is connected to an item if the user has reviewed
+that item. The weight of the edge is the star count associated with that
+review. The goal of our model is that for a (user, item) tuple without an
+existing review, we will be able to predict the strength of the missing
+edge.
+
+We implemented three collaborative filtering algorithms on our dataset to
+solve this problem of modified bipartite graph inference described
+previously. Our first model, the neighborhood-based collaborative
+filtering approach, focuses on similarity between users. The second model
+we attempted was item-based collaborative filtering, which aims to utilize
+similarity among products rated by the same user. Finally, our third model
+assumes a hidden similarity layer exists between users and items, and
+attempts to learn this using stochastic gradient descent. Further details
+about these models are outlined below.
+
 \subsection{Neighborhood-based model}
+
+In this algorithm, we predict ratings for a user based on the known
+ratings from similar users. The steps are outlined below:
+
+\begin{enumerate}
+  \item For a given user i, calculate similarity between this users and all
+    other users. 
+  \item Represent the dataset as a sparse matrix of businesses and users, with
+    values in the matrix being the ratings assigned by the users to the
+    businesses. Take the cosine similarity between the vectors of two users.
+  \item Select the k nearest neighbors of i based on this similarity measure
+  \item Compute a predicted rating for i based on a weighted combination of the
+    nearest neighbors. ratings
+\end{enumerate}
+
+We tried our model on both the original datasets (for both Yelp and
+Amazon), as well as a pruned Amazon dataset that included only users that
+had a minimum of 5 reviews and items with a minimum of 5 reviewers. While
+running this model on the un-pruned datasets, we found a number of
+instances where our test user would have only a single review (which we
+would be trying to predict), rendering the algorithm useless. Such
+examples were removed from our test set. 
+
 \subsection{Modified neighborhood model}
+
+Given the sparsity of our datasets, we decided to try a variation of the
+neighborhood based collaborative filtering approach, in which, instead of
+simply selecting the k nearest neighbors for a user, we select the k
+nearest neighbors out of those who have rated the product. This works
+poorly for items that have fewer than k reviews, as we end up simply
+calculating the average of the scores assigned to those items. However, we
+found that this modification worked very well in our high activity
+dataset, as there was enough information for each user and each item to
+make an informed decision. 
+
 \subsection{Item-based model}
+
+In their work on item-base collaborative filtering algorithms,
+\cite{bib:sarwar} take a different approach to the nearest
+neighbor problem, focusing on the similarities between items rather than
+users. In a similar vein, we will use the graph structure in the bipartite
+graph of users and businesses to compute a similarity metric between
+businesses. The motivating intuition being that users are likely to rate
+similar businesses comparably, yielding a better prediction for the (user,
+business) pair than the neighborhood-based method.
+
+Considering the item-space rather than the user space takes care of a few
+crucial problems. Namely, the search for similar users in the
+high-dimensional space of user profiles over the large set of all Yelp.s
+users is prohibitively computationally expensive. It also partially takes
+into account a missing data problem regarding new profiles which have
+comparatively few ratings for businesses.
+
+The steps involved in item-based collaborative filtering are as follows:
+\begin{enumerate}
+\item When considering the (user, item) pair, calculate similarities between
+  the target business and each of the items the user has rated previously
+\item Use cosine similarity and use all of the ratings for a particular item
+  over the user space as the feature vector to measure similarity between
+  items.
+\item Look for the k nearest neighbors to the target item from among the set of
+  items the user has rated previously
+\item Take a weighted average of the selected k items to compute a prediction
+  of the rating for the target item
+\end{enumerate}
+
+Once again, we encountered similar situations as described in the
+neighborhood-based collaborative filtering approach when evaluating our
+model on the un-pruned datasets, caused by the sparsity of the data. We
+removed (user, item) test cases in which the user had only a single review
+or the item had only one reviewer when testing.
+
 \subsection{Matrix factorization}
+
+In our final model, we aim to predict ratings by estimating
+parameters for statistical models for user ratings. Unlike the previous
+two methods which projected user ratings based on user similarity or
+item similarity, matrix factorization models assume that a similarity layer
+between users and items is induced by a hidden lower-dimensional structure
+latently present in the data.
+
+If we associate each item $i$ with a vector $q_i \in R^f$, and each user $u$ with a
+vector $p_u \in R^f$, then we can use the resulting dot product $q_i^Tp_u$ to represent
+the interest between user $u$ and item $i$. The problem then turns into a
+learning problem where we attempt to learn the distribution vectors for
+$q_i,p_u$. 
+
+A number of methods can be employed to learn these factor vectors for
+users and items. In their work on Netflix recommender systems,
+\cite{bib:bellkor} describe possible usage of two common approaches, namely,
+stochastic gradient descent and alternating least squares. Given the
+sparsity of our training set, stochastic gradient descent was a suitable
+option, whereby we computed, at each step, a prediction error $e_{ui}
+=r_{ui}-q_i^Tp_u$ for each user-item training pair, and adjust our
+parameters $q_i,p_u$ accordingly in the opposite direction of the gradient.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Results and Discussion}
@@ -262,6 +373,11 @@ Computing, 7(1), 76-80.
 Melville, P., Sindhwani, V. (2010).
 Recommender Systems. The Encyclopedia of Machine Learning. 
 http://www.prem-melville.com/publications/recommender-systems-eml2010.pdf
+
+\bibitem{bib:sarwar}
+Badrul Sarwar, George Karypis, Joseph Konstan, and John Reidl. 2001.
+Item-based collaborative filtering recommendation algorithms.
+In Proceedings of the 10th international conference on World Wide Web (WWW '01). ACM, New York, NY, USA, 285-295. 
 
 \end{thebibliography}
 
