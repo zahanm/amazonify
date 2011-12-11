@@ -43,10 +43,46 @@ effectiveness in a recommendation system.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
+In this paper, we focus on collaborative filtering methods for recommendations. 
+Collaborative filtering is the term applied to techniques that analyze the 
+relationships between users and products in a large dataset and make 
+recommendations based on similarity between nodes. Similarity depends only on
+history -- for example, two users may be similar if they have purchased many 
+of the same items, so one user's rating can be used to infer a rating for 
+another. The alternative to collaborative filtering is content filtering, which 
+creates features for users and products to assess compatibility. In contrast, 
+collaborative filtering does not need to create features like genre or subject, 
+so it is domain-independent [cite]. 
+
+\subsection{Previous Work -- needs more elaboration}
+Collaborative filtering has enjoyed a long popularity in recommendations tasks. 
+It was first used commercially in 1992 in a system called Tapestry to 
+recommend newsgroup messages to readers [Cite]. Neighborhood-based methods, 
+which we explore in two of our models, have been incorporated by Amazon into 
+its own recommendation engine [Cite]. Matrix factorization, another model we 
+explore, has also been highly successful. [Cite] Modern recommendation systems 
+often use a combination of collaborative filtering, content-based filtering, 
+and matrix factorization, often using multiple methods from each category. 
+The top entrants in the Netflix Prize used such hybrid approaches, employing 
+as many as 100 different techniques. [Cite]
+
+\subsection{Our project}
+This project explores some of the most popular ratings prediction methods using 
+a dataset from Amazon.com. The dataset, described in Section 
+\ref{sec:dataset}, contains product purchase metadata of over 500,000 DVDs, 
+music albums, books, and videos. We use both neighborhood-based and 
+matrix factorization methods, described in Section \ref{sec:models}, and we 
+discuss our findings in in Section \ref{sec:results}. Based on our 
+experiments, we hope to shed some light on the nature of the recommendation 
+task and the strengths of each of the models.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Dataset}
 \label{sec:dataset}
+\subsection{Preliminary Yelp dataset}
+
+\subsection{Amazon dataset}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Models}
