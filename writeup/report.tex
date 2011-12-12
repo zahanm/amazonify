@@ -126,6 +126,7 @@ We consider two data collections for this project. The first is a set of busines
 review information from Yelp.com. The second is a collection of Amazon product 
 purchase metadata from the Stanford Large Network Dataset Collection.
 
+\subsection{Yelp Academic Dataset}
 Yelp.com is a review aggregator site where users review local
 businesses. The dataset contains information about several different types of
 business venues including restaurants, shops,
@@ -168,6 +169,7 @@ rating that a user would assign to a business. As discussed in
 Section~\ref{sec:results}, our models performed poorly on this dataset, which 
 led us to switch to the Amazon dataset.
 
+\subsection{Amazon full dataset}
 The Amazon dataset is considerably larger, with over 
 500,000 product descriptions, including product title, salesrank, and ratings 
 information. For our project, we are mainly concerned with the ratings assigned 
@@ -235,6 +237,38 @@ instead of one
 \end{itemize}
 For these reasons, we focus this paper mainly on discussions relating to the 
 Amazon dataset.
+
+%% \subsection{Amazon high activity dataset}
+%% The Amazon dataset improves on the Yelp dataset, but it is still fairly 
+%% sparse -- the median user has only 2 reviews. We wanted to experiment on a 
+%% denser dataset to see how density affects model performance. 
+%% As a result, we created a third dataset from a high-activity 
+%% subset of the full Amazon dataset. This dataset comprises all products and 
+%% users with a review count of 5 or higher. Though this subset does not reflect 
+%% the real world, it allows us to gain insight on the significance of the 
+%% sparsity problem. The characteristics of this dataset are listed in 
+%% Table~\ref{table:amazonstats_sub}.
+
+%% \begin{table}[htb]
+%% \centering
+%% \begin{tabular}{|c|c|}
+%% \hline
+%% Users & 548,507 \tabularnewline \hline
+%% Reviews & 3,250,502 \tabularnewline \hline
+%% Products & 1555166 \tabularnewline \hline
+%% Median reviews per user & 0
+%% \tabularnewline \hline
+%% Median reviews per product & 0
+%% \tabularnewline \hline
+%% Average rating given &Mean = 4.11, Median = 5 \tabularnewline
+%% in a review &STD = 1.24
+%% \tabularnewline \hline
+
+%% \end{tabular}
+%% \caption{ High activity Amazon statistics }
+%% \label{table:amazonstats_sub}
+%% \end{table}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Models}
@@ -374,6 +408,27 @@ the errors.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Neighborhood-based model}
+\subsubsection{Yelp dataset}
+Our first attempt at the neighborhood-based model is on the Yelp dataset. The 
+results are shown below:
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+{\bf Model} &{\bf RMSE} \tabularnewline \hline
+1 neighbor &1.2572 \tabularnewline
+3 neighbors &1.2596 \tabularnewline
+5 neighbors &1.2619 \tabularnewline
+10 neighbors &1.2650 \tabularnewline
+50 neighbors &1.2758 \tabularnewline
+100 neighbors &1.2733 \tabularnewline
+1000 neighbors &1.1973 \tabularnewline
+\hline
+All other users &1.0891 \tabularnewline
+Always predict 4 &1.2549
+\tabularnewline \hline
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Full Amazon dataset}
 The results of the neighborhood-based model on the full Amazon dataset 
 are shown in Table~\ref{table:modelone_full} and Figure~\ref{fig:modelone_full}.
