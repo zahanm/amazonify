@@ -274,19 +274,20 @@ in a review &STD = 1.24
 \section{Models}
 \label{sec:models}
 
-We plan to model the star rating a given user would assign to a given
-venue or product. To begin, we will model our training data as a bipartite
-graph, where each user is connected to an item if the user has reviewed
+We wish to user our models to predict the star rating a given user would 
+assign to a given venue or product. To begin, we model our training data as a 
+bipartite graph, where each user is connected to an item if the user 
+has reviewed
 that item. The weight of the edge is the star count associated with that
 review. The goal of our model is that for a (user, item) tuple without an
 existing review, we will be able to predict the strength of the missing
 edge.
 
-We implemented three collaborative filtering algorithms on our dataset to
-solve this problem of modified bipartite graph inference described
-previously. Our first model, the neighborhood-based collaborative
+In this project, we implement three collaborative filtering algorithms on our 
+datasets to solve this modified bipartite graph inference problem. 
+Our first model, the neighborhood-based collaborative
 filtering approach, focuses on similarity between users. The second model
-we attempted was item-based collaborative filtering, which aims to utilize
+is item-based collaborative filtering, which aims to utilize
 similarity among products rated by the same user. Finally, our third model
 assumes a hidden similarity layer exists between users and items, and
 attempts to learn this using stochastic gradient descent. Further details
