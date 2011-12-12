@@ -707,10 +707,14 @@ Average of all other users & 0.2513 \tabularnewline
 \label{fig:modelthree_subset}
 \end{figure}
 
-As we suspected, even though reducing the number of
-latent dimensions raised the RMSE on the training set, it reduced the RMSE on
-the test set. Apparently, the model fits well enough  at $f = 20$ and
-$f = 10$ to capture just enough variance without much overfitting.
+This model does fairly well on the high-activity dataset, beating 
+both the baselines, though it does not perform as well as the neighborhood 
+model. 
+
+As we suspected, a smaller number of latent dimensions raised the RMSE on the 
+training set but reduced it on the test set. We did not use regularization in 
+this model, so perhaps the model suffers from a bit of overfitting at 
+$f = 20$.
 
 It is worth noting that though we tried to run this model with the 
 regularization as mentioned in matrix factorization papers 
@@ -721,11 +725,49 @@ of $\lambda$ (about $10^{-4}$) ended up interfering a great deal with gradient
 descent. As a result, in our final factorization method implementation,
 we ended up excluding regularization altogether.
 
+If we had more time and more computational power, we would try to increase 
+the number of dimensions even more, at least into the hundreds. We would also 
+experiment with different regularization values, because perhaps the correct 
+combination of $f$ and $\lambda$ is something we have not searched over yet. 
+However, this task is currently unfeasible on the Corn machines because of 
+memory requirements for high $f$. The timeframe of trying each combination is 
+also quite costly, which led us to have only two successful trials. We believe 
+the potential of this model is still largely unexplored after this set of 
+experiments. 
 
+In a recommendation system, an attractive characteristic of matrix 
+factorization is its speed in making predictions. Though training is costly, 
+a prediction just involves taking a dot product. However, the disadvantage is 
+that new users and products are hard to add, as this would change the 
+dimensions of the matrix. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
-In this project, we built three models for 
+In this project, we built three models for ratings prediction:
+\begin{enumerate}
+\item The neighborhood model predicts ratings based on ratings from similar 
+users. We found that this approach performs very poorly on sparse data and is 
+also slow due to the calculation of user similarity at test time.
+
+\item The item-based model makes predictions based on item similarity. Its 
+advantage is that product similarity can be calculated offline, and the system 
+is less dependent on changes in users. 
+
+\item The matrix factorization model learns latent parameters for products and 
+users. In our experiments, the model had promising results on the high-activity 
+dataset, but was too slow for much further experimentation. Though training is 
+slow, a trained model can make predictions quickly by taking a dot product. 
+
+All three collaborative filtering models suffer from the ``cold start'' 
+problem, in which users with little or no history have no basis for prediction. 
+To address this problem, it would help to combine collaborative filtering with 
+content-based filtering, in which users and products have hand-annotated 
+descriptions. This would make for an exciting extension to our current project. 
+In fact, many of the real-world recommendation systems today 
+already use complex and interesting combinations of the techniques in this 
+paper.
+
+\end{enumerate}
 
 \begin{thebibliography}{99}
 
