@@ -15,9 +15,9 @@ function [cost, grad] = factorization_cost(theta, num_products, num_users, ...
     h = u(u_ids, :);
     rating_diff = sum(w .* h, 2) - ratings;
     cost = (1 / num_examples) *sum(rating_diff.^2);
-    cost = cost + lambda * sum(theta.^2); % regularization adjustment
+    % cost = cost + lambda * sum(theta.^2); % regularization adjustment
     
-        
+
     % gradient
     grad_p = zeros(size(p));
     grad_u = zeros(size(u));
@@ -31,6 +31,6 @@ function [cost, grad] = factorization_cost(theta, num_products, num_users, ...
     end
     grad = [grad_p(:); grad_u(:)];
     grad = (1 / num_examples) * grad; % scale
-    grad = grad + 2*lambda*theta; % regularization adjustment
+    % grad = grad + 2*lambda*theta; % regularization adjustment
     
 end

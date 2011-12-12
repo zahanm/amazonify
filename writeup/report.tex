@@ -342,9 +342,13 @@ latently present in the data.
 
 If we associate each item $i$ with a vector $q_i \in R^f$, and each user $u$ with a
 vector $p_u \in R^f$, then we can use the resulting dot product $q_i^Tp_u$ to represent
-the interest between user $u$ and item $i$. The problem then turns into a
+the interest between user $u$ and item $i$.
+Here, we are mapping both items and users to a unified Euclidean space
+representing the network topology of the bipartite graph.
+The problem then turns into a
 learning problem where we attempt to learn the distribution vectors for
-$q_i,p_u$. 
+$q_i,p_u$. From those vectors one can infer the interest that a user will
+have in an item from the simple dot product.
 
 A number of methods can be employed to learn these factor vectors for
 users and items. In their work on Netflix recommender systems,
