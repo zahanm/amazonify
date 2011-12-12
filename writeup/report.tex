@@ -520,19 +520,19 @@ converge on a suitable mapping to a new vector space.
 \subsubsection{Amazon high-activity dataset}
 It ran very well, however, on the high activity Amazon subset, and the results are
 showm in Table~\ref{table:modelthree_subset} and 
-Figure~\ref{fig:modelone_subset}. We varied the number of latent dimensions being
-learned over in the common user-product space and found that we were able to capture
-enough variance with $f = 10$, and avoid the overfitting to training data that
-took place at $f=20$.
+Figure~\ref{fig:modelone_subset}. We varied the number of latent dimensions ($f$)
+being learned over in the common user-product space and found that we were able
+to capture enough variance with $f = 10$, and avoid the overfitting to training
+data that took place at $f = 20$.
 
 \begin{table}[htb]
 \centering
-\begin{tabular}{|c|c|c|}
+\begin{tabular}{|c|c|}
 \cline{2-2}
 
-Latent Dimensions & Normalized Train RMSE & Normalized Test RMSE \tabularnewline \hline
-$f$ = 10 & 0.1886 & 0.2231 \tabularnewline
-$f$ = 20 & 0.1774 & 0.2280 \tabularnewline
+\multicolumn{1}{c|}{} & {Normalized RMSE} \tabularnewline \hline
+$f$ = 10 & 0.2231 \tabularnewline
+$f$ = 20 & 0.2280 \tabularnewline
 \hline
 Always predict 4 & 0.3049 \tabularnewline 
 Average of all other users & 0.2513 \tabularnewline
