@@ -585,6 +585,20 @@ This trend is in contrast to the Amazon full dataset,
 where most test users did not have any meaningful history to calculate 
 neighbors from, resulting in a poor pool of neighbors. 
 
+\subsubsection{Modified neighborhood model}
+
+We attempted the modified version of neighborhood model, where instead of
+simply looking for users similar to the user being tested, we considered
+only those users who had rated the product in question. We found the $k$
+closest neighbors from this subset and made predictions based on their
+ratings. The advantage of this was that we would almost always have a
+rating to predict for a (user, product) pair, since the neighborhood of
+the user would always contain users who had rated the product in
+question. However, we found that the resulting predictions were often closely
+mirroring the average rating of the product, as one would expect, and did
+not perform better than the regular neighborhood model.
+
+
 \subsubsection{Summary of neighborhood models}
 In these models, we learned that the user-similarity approach of neighborhood 
 models does not work well in sparse datasets where users have few edges. 
