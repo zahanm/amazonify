@@ -274,19 +274,20 @@ in a review &STD = 1.24
 \section{Models}
 \label{sec:models}
 
-We plan to model the star rating a given user would assign to a given
-venue or product. To begin, we will model our training data as a bipartite
-graph, where each user is connected to an item if the user has reviewed
+We wish to user our models to predict the star rating a given user would 
+assign to a given venue or product. To begin, we model our training data as a 
+bipartite graph, where each user is connected to an item if the user 
+has reviewed
 that item. The weight of the edge is the star count associated with that
 review. The goal of our model is that for a (user, item) tuple without an
 existing review, we will be able to predict the strength of the missing
 edge.
 
-We implemented three collaborative filtering algorithms on our dataset to
-solve this problem of modified bipartite graph inference described
-previously. Our first model, the neighborhood-based collaborative
+In this project, we implement three collaborative filtering algorithms on our 
+datasets to solve this modified bipartite graph inference problem. 
+Our first model, the neighborhood-based collaborative
 filtering approach, focuses on similarity between users. The second model
-we attempted was item-based collaborative filtering, which aims to utilize
+is item-based collaborative filtering, which utilizes 
 similarity among products rated by the same user. Finally, our third model
 assumes a hidden similarity layer exists between users and items, and
 attempts to learn this using stochastic gradient descent. Further details
@@ -308,42 +309,39 @@ ratings from similar users. The steps are outlined below:
     nearest neighbors. ratings
 \end{enumerate}
 
-We tried our model on both the original datasets (for both Yelp and
-Amazon), as well as a pruned Amazon dataset that included only users that
-had a minimum of 5 reviews and items with a minimum of 5 reviewers. While
-running this model on the un-pruned datasets, we found a number of
-instances where our test user would have only a single review (which we
-would be trying to predict), rendering the algorithm useless. Such
-examples were removed from our test set. 
+While running this model, we sometimes find users with no ratings history 
+except for the one rating we are trying to predict, or we find users whose 
+neighbors have never rated the product in the prediction. When this happens, we 
+have the neighborhood predict a default value of four.
 
 \subsection{Modified neighborhood model}
 
-Given the sparsity of our datasets, we decided to try a variation of the
-neighborhood based collaborative filtering approach, in which, instead of
+Given the sparsity of our datasets, we also try a variation of the
+neighborhood based collaborative filtering approach, in which instead of
 simply selecting the k nearest neighbors for a user, we select the k
 nearest neighbors out of those who have rated the product. This works
 poorly for items that have fewer than k reviews, as we end up simply
-calculating the average of the scores assigned to those items. However, we
-found that this modification worked very well in our high activity
-dataset, as there was enough information for each user and each item to
-make an informed decision. 
+calculating the average of the scores assigned to those items. When no 
+neighbors can be found, this algorithm becomes useless, so we skip those 
+particular predictions. Our motivation for using this variation is that 
+these changes might alleviate the ``cold start'' problem when users have no 
+history.
 
 \subsection{Item-based model}
 
-In their work on item-base collaborative filtering algorithms,
-\cite{bib:sarwar} take a different approach to the nearest
-neighbor problem, focusing on the similarities between items rather than
-users. In a similar vein, we will use the graph structure in the bipartite
+Sarwar, et al.\cite{bib:sarwar} take a item-base collaborative filtering algorithms,
+ which, focusing on the similarities between items rather than
+users. In a similar vein, we also use the graph structure in the bipartite
 graph of users and businesses to compute a similarity metric between
-businesses. The motivating intuition being that users are likely to rate
+businesses. The motivating intuition is that users are likely to rate
 similar businesses comparably, yielding a better prediction for the (user,
 business) pair than the neighborhood-based method.
 
-Considering the item-space rather than the user space takes care of a few
+Considering the item-space rather than the user space takes care of some 
 crucial problems. Namely, the search for similar users in the
 high-dimensional space of user profiles over the large set of all Yelp.s
 users is prohibitively computationally expensive. It also partially takes
-into account a missing data problem regarding new profiles which have
+into account a missing data problem regarding new user profiles that have
 comparatively few ratings for businesses.
 
 The steps involved in item-based collaborative filtering are as follows:
@@ -359,15 +357,13 @@ The steps involved in item-based collaborative filtering are as follows:
   of the rating for the target item
 \end{enumerate}
 
-Once again, we encountered similar situations as described in the
-neighborhood-based collaborative filtering approach when evaluating our
-model on the un-pruned datasets, caused by the sparsity of the data. We
-removed (user, item) test cases in which the user had only a single review
-or the item had only one reviewer when testing.
+When we encounter examples with no history, we again predict a default value 
+of 4, as in the neighborhood-based model.
+
 
 \subsection{Matrix factorization}
 
-In our final model, we aim to predict ratings by estimating
+In our final model, we predict ratings by estimating
 parameters for statistical models for user ratings. Unlike the previous
 two methods which projected user ratings based on user similarity or
 item similarity, matrix factorization models assume that a similarity layer
@@ -385,11 +381,11 @@ $q_i,p_u$. From those vectors one can infer the interest that a user will
 have in an item from the simple dot product.
 
 A number of methods can be employed to learn these factor vectors for
-users and items. In their work on Netflix recommender systems,
+users and items. In their work on Netflix recommender systems, Bell, et al.
 \cite{bib:bellkor} describe possible usage of two common approaches, namely,
 stochastic gradient descent and alternating least squares. Given the
-sparsity of our training set, stochastic gradient descent was a suitable
-option, whereby we computed, at each step, a prediction error $e_{ui}
+sparsity of our training set, stochastic gradient descent is a suitable
+option, whereby we compute, at each step, a prediction error $e_{ui}
 =r_{ui}-q_i^Tp_u$ for each user-item training pair, and adjust our
 parameters $q_i,p_u$ accordingly in the opposite direction of the gradient.
 
@@ -398,7 +394,8 @@ parameters $q_i,p_u$ accordingly in the opposite direction of the gradient.
 \section{Results and Discussion}
 \label{sec:results}
 
-We report the results of our models on the Yelp dataset, the full Amazon
+In this section, we report the results of our models on the Yelp dataset, 
+the full Amazon
 dataset and on the Amazon high-activity subset. We count a dataset  
 example as a 3-tuple of product, user, and star rating. For each of the three 
 datasets, we randomly shuffle the examples and make train-test splits as shown 
@@ -677,17 +674,17 @@ Average of all other products & 0.2834 \tabularnewline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Matrix factorization}
-We tried to run this model on both smaller and sparser sets, such as the Yelp and 
-original Amazon datasets, but the stochastic gradient minimization was unable to
-converge on a suitable mapping to a new vector space.
+The last model we tried was matrix factorization. When we ran this model on the 
+sparser Yelp and Amazon full datasets, gradient minimization was unable to 
+converge. Because the time of each iteration was too long, and there were too 
+many parameters to consider, we focused on running this model on the 
+high-activity Amazon dataset.
 
 \subsubsection{Amazon high-activity dataset}
-It ran very well, however, on the high activity Amazon subset, and the results are
-showm in Table~\ref{table:modelthree_subset} and 
+The results of matrix factorization are shown in 
+Table~\ref{table:modelthree_subset} and
 Figure~\ref{fig:modelone_subset}. We varied the number of latent dimensions ($f$)
-being learned over in the common user-product space and found that we were able
-to capture enough variance with $f = 10$, and avoid the overfitting to training
-data that took place at $f = 20$.
+in the user-product space to take into account overfitting effects. 
 
 \begin{table}[htb]
 \centering
@@ -712,9 +709,25 @@ Average of all other users & 0.2513 \tabularnewline
 \label{fig:modelthree_subset}
 \end{figure}
 
+As we suspected, even though reducing the number of
+latent dimensions raised the RMSE on the training set, it reduced the RMSE on
+the test set. Apparently, the model fits well enough  at $f = 20$ and
+$f = 10$ to capture just enough variance without much overfitting.
+
+It is worth noting that though we tried to run this model with the 
+regularization as mentioned in matrix factorization papers 
+\cite{bib:matrixfact}, our model performed very poorly with regularization. 
+While the purpose of regularization is to avoid overfitting effects by 
+penalizing large parameter values, even very small values 
+of $\lambda$ (about $10^{-4}$) ended up interfering a great deal with gradient 
+descent. As a result, in our final factorization method implementation,
+we ended up excluding regularization altogether.
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
-
+In this project, we built three models for 
 
 \begin{thebibliography}{99}
 
