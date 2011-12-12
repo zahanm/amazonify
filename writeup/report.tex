@@ -1,9 +1,6 @@
 %% \documentclass[letterpaper, 10 pt, twocolumn]{article}
 \documentclass[letterpaper, 11 pt, conference]{ieeeconf}
-%% \IEEEoverridecommandlockouts                          
-% This command is only
-                                                          % needed if you want to
-                                                          % use the \thanks command
+\IEEEoverridecommandlockouts                          
 \overrideIEEEmargins
 % See the \addtolength command later in the file to balance the column lengths
 % on the last page of the document
@@ -20,7 +17,7 @@
 
 
 \title{\LARGE \bf
-Recommendation Systems for Amazon.com
+Collaborative filtering models for recommendations systems
 }
 \author{Nikhil Johri, Zahan Malkani, and Ying Wang
 }
@@ -118,7 +115,7 @@ a dataset from Amazon.com. The dataset, described in Section
 music albums, books, and videos. We use both neighborhood-based and 
 matrix factorization methods, described in Section \ref{sec:models}, and we 
 discuss our findings in in Section \ref{sec:results}. Based on our 
-experiments, we hope to shed some light on the nature of the recommendation 
+experiments, we hope to shed light on the nature of the recommendation 
 task and the strengths of each of the models.
 
 
@@ -136,19 +133,7 @@ nightlife, and beauty spas. A reviewer assigns a 1-5 star rating to a venue and
 writes a text review. Other members then have the opportunity to vote on the
 usefulness of the review (positive votes only).
 
-Since this dataset is provided by Yelp.com specifically for academic teams to
-experiment with algorithms, and not for actual prediction usage, we found the
-dataset not large enough to meet our models' training requirements.
-Consisting of review information for businesses around 30 universities,
-with a total of just 7500 businesses, key characteristics of this set
-are in Table~\ref{table:yelpstats}.
-
-As appropriate, we modelled this data using a bipartite graph with users and
-businesses as vertices, and the reviews represented as edges.
-We built our system to predict the numerical value of the star
-rating that a user would bestow upon a business. Unfortunately, we quickly
-found that we would not be able to produce robust prediction results from
-this dataset as we will discuss in Section~\ref{sec:results}.
+The statistics of this dataset are show in Table~\ref{table:yelpstats}.
 
 \begin{table}[htb]
 \centering
@@ -157,9 +142,9 @@ this dataset as we will discuss in Section~\ref{sec:results}.
 Users &65,888 \tabularnewline \hline
 Reviews &152,327 \tabularnewline \hline
 Businesses &9600 \tabularnewline \hline
-Reviews per user &Mean = 2.31, Median = 1, STD = 3.83 
+Median reviews per user & 1
 \tabularnewline \hline
-Reviews per business &Mean = 22.08, Median = 6, STD = 57.4 
+Median reviews per business &  6
 \tabularnewline \hline
 Average rating given &Mean = 3.64, Median = 4 \tabularnewline
 in a review &Mode = 4, STD = 1.21 
@@ -170,12 +155,25 @@ in a review &Mode = 4, STD = 1.21
 \label{table:yelpstats}
 \end{table}
 
-The Amazon dataset was considerably larger, with over 
-500,000 product entitities, including product title, salesrank, and ratings 
-information. For our project, we are concerned with the ratings assigned 
+Unfortunately, we found this dataset too small for meaningful experimentation 
+with our algorithms: it consists of a total of 7500 businesses, but the 
+businesses come from 30 distinctly different geographies. There is little
+cross-geographic interaction between users and businesses, which adds to the 
+sparsity problem that is already common in such datasets. 
+
+For our project milestone, we modeled the Yelp data using a bipartite graph 
+with users and businesses as vertices and reviews as edges.
+We built our system to predict the numerical value of the star
+rating that a user would assign to a business. As discussed in 
+Section~\ref{sec:results}, our models performed poorly on this dataset, which 
+led us to switch to the Amazon dataset.
+
+The Amazon dataset is considerably larger, with over 
+500,000 product descriptions, including product title, salesrank, and ratings 
+information. For our project, we are mainly concerned with the ratings assigned 
 by users to products. We parsed the dataset to a bipartite review 
 graph whose nodes are products and users and edges are the ratings given by 
-users to products. After extracting only the relevant data, we found many 
+users to products. When we extracted the relevant data, we found many 
 duplicate entries where a user $u$ has reviewed a product $p$ several times, 
 sometimes assigning different ratings each time. After eliminating the 
 duplicates, we reached a dataset with properties shown in 
@@ -188,9 +186,9 @@ Table~\ref{table:amazonstats}.
 Users &1,555,171 \tabularnewline \hline
 Reviews &6,285,389 \tabularnewline \hline
 Products &548,551 \tabularnewline \hline
-Reviews per user &Mean = 4.04, Median = 2, STD = 68
+Median reviews per user & 2
 \tabularnewline \hline
-Reviews per product &Mean = 11.45, Median = 2, STD = 55.5 
+Median reviews per product & 2
 \tabularnewline \hline
 Average rating given &Mean = 4.15, Median = 5 \tabularnewline
 in a review &STD = 1.2567
@@ -201,17 +199,12 @@ in a review &STD = 1.2567
 \label{table:amazonstats}
 \end{table}
 
-The review densities followed a clean power law distribution as can be seen
-in Figure~\ref{fig:userhist} for the users and Figure~\ref{fig:producthist}
-for the products. As far as the ratings are concerned however, we see in
-Figure~\ref{fig:ratings} that they skew towards the high end with a bimodal
-general form.
-
-\begin{figure}[h]
-\includegraphics[scale=0.6]{images/ratings.pdf}
-\caption{Star rating distribution}
-\label{fig:ratings}
-\end{figure}
+Figures~\ref{fig:userhist} and~\ref{fig:producthist} show the review count 
+distributions for users and products in the Amazon dataset. 
+Figure~\ref{fig:ratings} shows the distribution of star ratings. We see that 
+the user and product distributions follow power laws with exponents X and Y, 
+respectively. On the other hand, star ratings skew towards the high end with 
+a bimodal general form.
 
 \begin{figure}[h]
 \includegraphics[scale=0.6]{images/user_hist.pdf}
@@ -224,6 +217,24 @@ general form.
 \caption{Product review count distribution}
 \label{fig:producthist}
 \end{figure}
+
+\begin{figure}[h]
+\includegraphics[scale=0.6]{images/ratings.pdf}
+\caption{Star rating distribution}
+\label{fig:ratings}
+\end{figure}
+
+
+Switching to the Amazon dataset provided several benefits:
+\begin{itemize}
+\item The number of edges in the graph higher is more one order of magnitude 
+higher than in the Yelp dataset.
+\item There is no geograhic isolation between groups of users and products
+\item The graph is less sparse for users, with a median review count of two 
+instead of one
+\end{itemize}
+For these reasons, we focus this paper mainly on discussions relating to the 
+Amazon dataset.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Models}
@@ -357,10 +368,11 @@ in the interest of preserving granularity for model comparison, predicted
 fractional ratings are not rounded to the nearest integer before calculating 
 the errors. 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Neighborhood-based model}
 \subsubsection{Full Amazon dataset}
-The results of the neighborhood-based model on the full full Amazon dataset 
-are shown in Table \ref{table:modelone_full} and Figure \ref{fig:modelone_full}.
+The results of the neighborhood-based model on the full Amazon dataset 
+are shown in Table~\ref{table:modelone_full} and Figure~\ref{fig:modelone_full}.
 
 \begin{table}[htb]
 \centering
@@ -389,8 +401,12 @@ Average of all other users & 0.3007 \tabularnewline
 \label{fig:modelone_full}
 \end{figure}
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Amazon high-activity dataset}
+The results of the neighborhood-based model on the high activity Amazon dataset 
+are shown in Table~\ref{table:modelone_subset} and 
+Figure~\ref{fig:modelone_subset}.
+
 \begin{table}[htb]
 \centering
 \begin{tabular}{|c|c|}
@@ -417,7 +433,10 @@ Average of all other users & 0.2513 \tabularnewline
 \label{fig:modelone_subset}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Item-based model}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \subsection{Matrix factorization}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -459,5 +478,10 @@ Item-based collaborative filtering recommendation algorithms.
 In Proceedings of the 10th international conference on World Wide Web (WWW '01). ACM, New York, NY, USA, 285-295. 
 
 \end{thebibliography}
+
+\section{Acknowledgments}
+We would like to acknowledge Jure Leskvec and the teaching staff of 
+Stanford's CS224W for their advice and support. We also thank Yelp for the 
+Yelp Academic Dataset, and Jure Leskovec for the Amazon dataset.
 
 \end{document}
