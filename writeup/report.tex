@@ -471,6 +471,16 @@ Average of all other users & 0.2723 \tabularnewline
 \label{fig:modelone_yelp}
 \end{figure}
 
+The neighborhood model's performance on the Yelp dataset is not impressive. The 
+model performs better than a baseline model that predicts 4 for every product, 
+but not better than another baseline model that predicts the average rating 
+given by all other users. 
+
+The error increases with $k$ at first, most likely because adding less similar 
+users dilutes the quality of the similar users pool. However, as we increase 
+$k$ to over 50, the error decreases again. This means that the model approaches 
+the baseline of predicting the average for all users. 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Full Amazon dataset}
 The results of the neighborhood-based model on the full Amazon dataset 
