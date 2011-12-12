@@ -616,7 +616,7 @@ $k$ = 1 & 0.1972 \tabularnewline
 $k$ = 3 & 0.2099 \tabularnewline
 $k$ = 5 & 0.2185 \tabularnewline
 $k$ = 10 & 0.2284 \tabularnewline
-$k$ = 25 & 0.0.2339 \tabularnewline
+$k$ = 25 & 0.2339 \tabularnewline
 \hline
 Always predict 4 & 0.3211 \tabularnewline 
 Average of all other users & 0.3007 \tabularnewline
@@ -634,10 +634,26 @@ Average of all other users & 0.3007 \tabularnewline
 \end{figure}
 
 Compared to the neighborhood-based model, the item based model performs
-far better on the full dataset. Interestingly, the performance of the
-model decreases with higher values of k, though very slightly. Prior work
-has shown that item based models were specifically created for sparse
-datasets \cite{bib:amazon}.
+far better on the full dataset. Prior work has stated that item-based
+models were specifically created for sparser datasets
+\cite{bib:amazon}. One possible explanation for this is that users with
+several reviews are likely to have a wider range of ratings; on the other
+hand, a user with only two or three reviews is likely to have bestowed the
+same rating upon all items he or she has reviewed. As a result, when
+trying to make a prediction in a sparse context, it is far more useful to
+consider the small number of ratings provided by the user in question,
+rather than trying to use this limited set of ratings to find similar
+users and make a prediction based on them.
+Interestingly, the performance of the model decreases with higher values
+of k. This can also be accredited to the previous explanation: a larger
+variety of ratings for a user would imply more diversity in ratings. While
+the predictions remain the same for low activity users, they get 
+worse for those with a lot of ratings. With smaller values of k, we are
+averaging over ratings of a few products which are similar to the one in
+question; with larger values, we are looking at a whole array of ratings,
+which for high activity users is bound to be very diverse, rendering the
+average score less useful.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Amazon high-activity dataset}
@@ -670,6 +686,24 @@ Average of all other products & 0.2834 \tabularnewline
 \caption{Item-based model, high-activity dataset}
 \label{fig:modeltwo_subset}
 \end{figure}
+
+
+As expected, the performance of the item-based model decreases in the case
+of the less sparse, high-activity dataset. While the neighborhood model
+performed a lot better in this context, the item-based model falters, as
+it is now predicting averages over more diverse rating sets. The
+phenomenon of the low activity user with the same rating for all two or
+three rated products no longer exists, removing the boost in prediction
+the item-based model received in the sparser dataset.
+
+Additionally, the performance of the model improves with an increase in
+the value of k from 1 to 3, and stays fairly stable thereafter. This can
+be explained by the fact that each user in this dataset has rated several
+products, and basing their rating on one similar product alone may not be
+enough, or may be too extreme. When averaging out over a few related
+products, the performance therefore increases. Unlike the sparse dataset,
+however, there is no help from low activity users for low values of k.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
