@@ -34,8 +34,9 @@ Modern retailers frequently use recommendation systems to suggest products of
 interest to a collection of consumers. A closely related task is ratings 
 prediction, in which the system predicts a numerical rating that a 
 user $u$ will assign to a product $p$. In this paper, we build three ratings 
-prediction models for a dataset of products and users from Amazon.com. We 
-evaluate the strengths and weaknesses of each model, and discuss their 
+prediction models for a dataset of products and users from Amazon.com and 
+Yelp.com. 
+We evaluate the strengths and weaknesses of each model, and discuss their 
 effectiveness in a recommendation system.
 
 \end{abstract}
@@ -253,9 +254,9 @@ Table~\ref{table:amazonstats_sub}.
 \centering
 \begin{tabular}{|c|c|}
 \hline
-Users & 548,507 \tabularnewline \hline
+Users & 89,322 \tabularnewline \hline
 Reviews & 3,250,502 \tabularnewline \hline
-Products & 1555166 \tabularnewline \hline
+Products & 174,601 \tabularnewline \hline
 Median reviews per user & 14
 \tabularnewline \hline
 Median reviews per product & 9
@@ -410,28 +411,37 @@ the errors.
 \subsection{Neighborhood-based model}
 \subsubsection{Yelp dataset}
 Our first attempt at the neighborhood-based model is on the Yelp dataset. The 
-results are shown in Table \ref{table:modelone_yelp}:
+results are shown in Table \ref{table:modelone_yelp} and Figure 
+\ref{fig:modelone_yelp}:
+
 \begin{table}[htb]
 \centering
 \begin{tabular}{|c|c|}
-\hline
-{\bf Model} &{\bf RMSE} \tabularnewline \hline
-1 neighbor &1.2572 \tabularnewline
-3 neighbors &1.2596 \tabularnewline
-5 neighbors &1.2619 \tabularnewline
-10 neighbors &1.2650 \tabularnewline
-50 neighbors &1.2758 \tabularnewline
-100 neighbors &1.2733 \tabularnewline
-1000 neighbors &1.1973 \tabularnewline
-\hline
-All other users &1.0891 \tabularnewline
-Always predict 4 &1.2549
-\tabularnewline \hline
+\cline{2-2}
 
+\multicolumn{1}{c|}{}  & {Normalized RMSE} \tabularnewline \hline
+$k$ = 1 & 0.3143  \tabularnewline
+$k$ = 3 &  0.3149 \tabularnewline
+$k$ = 5 & 0.3155  \tabularnewline
+$k$ = 10 & 0.3162  \tabularnewline
+$k$ = 50  & 0.3189 \tabularnewline
+$k$ = 100 & 0.3183 \tabularnewline
+$k$ = 1000 & 0.2993 \tabularnewline
+\hline
+Always predict 4 & 0.3137 \tabularnewline 
+Average of all other users & 0.2723 \tabularnewline
+
+\hline
 \end{tabular}
-\caption{ Neighborhood-based CF Model Performance }
+\caption{Neighborhood model, Yelp dataset}
 \label{table:modelone_yelp}
 \end{table}
+
+\begin{figure}[h]
+\includegraphics[scale=0.6]{images/modelone_yelp.pdf}
+\caption{Neighborhood model, Yelp dataset}
+\label{fig:modelone_yelp}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Full Amazon dataset}
