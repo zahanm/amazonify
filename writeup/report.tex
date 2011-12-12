@@ -676,17 +676,20 @@ Average of all other users & 0.2513 \tabularnewline
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Matrix factorization}
-We tried to run this model on both smaller and sparser sets, such as the Yelp and 
-original Amazon datasets, but the stochastic gradient minimization was unable to
-converge on a suitable mapping to a new vector space.
+This particular model not suited to being run on the smaller and sparser sets.
+We tried to run it on the Yelp and original Amazon datasets, but the stochastic
+gradient minimization was unable to find convergance in a tenable number of
+iterations. As a result, we concentrated on the high-activity Amazon dataset.
 
 \subsubsection{Amazon high-activity dataset}
-It ran very well, however, on the high activity Amazon subset, and the results are
-showm in Table~\ref{table:modelthree_subset} and 
+It ran very well, however, on this dataset and the results are shown in
+Table~\ref{table:modelthree_subset} and
 Figure~\ref{fig:modelone_subset}. We varied the number of latent dimensions ($f$)
-being learned over in the common user-product space and found that we were able
-to capture enough variance with $f = 10$, and avoid the overfitting to training
-data that took place at $f = 20$.
+being learned over in the common user-product space and to take into account
+overfitting effects. Just as we suspected, even though reducing the number of
+latent dimensions raised the RMSE on the training set, it reduced the RMSE on
+the test set. Apparently, teh training set was being overfit at $f = 20$ and
+$f = 10$ was able to capture just enough variance.
 
 \begin{table}[htb]
 \centering
@@ -710,6 +713,15 @@ Average of all other users & 0.2513 \tabularnewline
 \caption{Matrix factorization model, high-activity dataset}
 \label{fig:modelthree_subset}
 \end{figure}
+
+It is worth noting, that we also tried to run this model with the regularization
+parameter ($\lambda$) mentioned in matrix factorization papers \cite{bib:matrixfact}.
+It`s purpose is to avoid overfitting effects by penalizing extremely large values of 
+any particular coefficient corresponding to a dimension in the new space.
+It turns out for our purposes though, it ended up outweighing the gradient descent
+cost function being minimized even for absurdly small values of $\lambda$.
+As a result, in the final version of our factorization method implementation,
+we ended up excluding the regularization parameter.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}
