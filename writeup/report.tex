@@ -205,9 +205,8 @@ in a review &STD = 1.2567
 Figures~\ref{fig:userhist} and~\ref{fig:producthist} show the review count 
 distributions for users and products in the Amazon dataset. 
 Figure~\ref{fig:ratings} shows the distribution of star ratings. We see that 
-the user and product distributions follow power laws with exponents X and Y, 
-respectively. On the other hand, star ratings skew towards the high end with 
-a bimodal general form.
+the user and product distributions follow power laws, while star ratings skew 
+towards the high end with a bimodal general form.
 
 \begin{figure}[h]
 \includegraphics[scale=0.6]{images/user_hist.pdf}
@@ -400,9 +399,10 @@ parameters $q_i,p_u$ accordingly in the opposite direction of the gradient.
 \label{sec:results}
 
 We report the results of our models on the Yelp dataset, the full Amazon
-dataset and on the Amazon high-activity subset. We randomly divide the 
-(product, user, rating) examples from each dataset into training and test 
-sets as shown in Table \ref{table:traintest}
+dataset and on the Amazon high-activity subset. We count a dataset  
+example as a 3-tuple of product, user, and star rating. For each of the three 
+datasets, we randomly shuffle the examples and make train-test splits as shown 
+in Table~\ref{table:traintest}.
 
 \begin{table}[htb]
 \centering
@@ -438,7 +438,7 @@ were now working with datasets that took much longer to test.
 \subsection{Neighborhood-based model}
 
 \subsubsection{Yelp dataset}
-Our first attempt at the neighborhood-based model is on the Yelp dataset. The 
+Our first attempt at the neighborhood-based model was on the Yelp dataset. The 
 results are shown in Table \ref{table:modelone_yelp} and Figure 
 \ref{fig:modelone_yelp}:
 
@@ -481,9 +481,24 @@ users dilutes the quality of the similar users pool. However, as we increase
 $k$ to over 50, the error decreases again. This means that the model approaches 
 the baseline of predicting the average for all users. 
 
+The main problem with the Yelp dataset is its sparsity -- the median review 
+count is one, which means that we can expect over half our users in the test 
+set to have reviewed only one item. If we try to predict that rating, we 
+do not have any other history to go on. Therefore, we cannot find an similar 
+users by any reasonable definition, and we just predict a default value of 4. 
+
+Since the neighborhood model is user-based, this lack of similarity between 
+users is especially bad. We conclude that the neighborhood approach is not 
+effective on the Yelp dataset.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Full Amazon dataset}
-The results of the neighborhood-based model on the full Amazon dataset 
+Next, we wanted to see if having a larger dataset would change the neighborhood 
+model's performance. We tested only $k$ values under 25, since having more 
+than 25 neighbors just approaches predicting the average and does not give 
+insight about the usefulness of close neighbors. 
+
+The results on the full Amazon dataset 
 are shown in Table~\ref{table:modelone_full} and Figure~\ref{fig:modelone_full}.
 
 \begin{table}[htb]
@@ -513,11 +528,26 @@ Average of all other users & 0.3007 \tabularnewline
 \label{fig:modelone_full}
 \end{figure}
 
+Even though the Amazon full dataset is much larger than the Yelp dataset, it 
+is still quite sparse: the median review count for a user is 2. As a result, 
+the Amazon full dataset does not perform any better on this model. 
+An interesting thing to note is that this dataset does not seem to have any 
+initial rise in error with an increase in neighbors. It starts with the highest 
+error at $k = 1$ and declines steadily as we bring more people into the pool. 
+This suggests calculating user similarity using cosine similarity is not at all 
+helpful on Amazon; an item-based method might fare better. 
+
+Another conclusion we can draw is that sparsity does indeed matter more than 
+dataset size. Even though the Amazon dataset is one order of magnitude larger 
+than the Yelp dataset, there doesn't seem to be a performance gain because the 
+model still does not beat the baselines. 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Amazon high-activity dataset}
-The results of the neighborhood-based model on the high activity Amazon dataset 
-are shown in Table~\ref{table:modelone_subset} and 
-Figure~\ref{fig:modelone_subset}.
+To test the sparsity hypothesis further, we ran the neighborhood model on the 
+high activity Amazon dataset. The results are shown in 
+Table~\ref{table:modelone_subset} and Figure~\ref{fig:modelone_subset}.
 
 \begin{table}[htb]
 \centering
@@ -544,6 +574,32 @@ Average of all other users & 0.2513 \tabularnewline
 \caption{Neighborhood model, high-activity dataset}
 \label{fig:modelone_subset}
 \end{figure}
+
+The high-activity dataset achieves remarkably good performance. At every value 
+of $k$, the model beats both baselines. This confirms our hypothesis that 
+sparsity was at fault in the poor results on the Yelp dataset and Amazon full 
+dataset.
+
+Furthermore, we see that error rises with $k$, which is opposite to 
+the falling shape of the curve in the full Amazon dataset. This indicates that 
+the error increases as more neighbors of poorer quality are added, so using the 
+nearest neighbors as defined by cosine similarity are indeed valuable. 
+This trend is in contrast to the Amazon full dataset, 
+where most test users did not have any meaningful history to calculate 
+neighbors from, resulting in a poor pool of neighbors. 
+
+\subsubsection{Summary of neighborhood models}
+In these models, we learned that the user-similarity approach of neighborhood 
+models does not work well in sparse datasets where users have few edges. 
+Unfortunately, most large datasets are sparse, so it is unlikely that we will 
+see good performance from the neighborhood model like in the Amazon high 
+activity dataset. Another unattractive quality of the neighborhood model is 
+that it is slow. Although there is no training involved, we need to calculate 
+user $u$'s similarity with all other users at test time. This is a 
+time-expensive procedure unless we store all pairs of similarities 
+ahead of time. Based on its poor accuracy and speed, the neighborhood-based 
+model is not the best choice to be used alone in a recommendation engine.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Item-based model}
