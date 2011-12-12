@@ -399,13 +399,40 @@ parameters $q_i,p_u$ accordingly in the opposite direction of the gradient.
 \section{Results and Discussion}
 \label{sec:results}
 
-We report the results of our models on the full Amazon dataset and on our 
-high-activity subset. We measure performance over the test sets using 
+We report the results of our models on the Yelp dataset, the full Amazon
+dataset and on the Amazon high-activity subset. We randomly divide the 
+(product, user, rating) examples from each dataset into training and test 
+sets as shown in Table \ref{table:traintest}
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|c|}
+\cline{2-3}
+
+\multicolumn{1}{c|}{}  & {Num train}  & {Num test} \tabularnewline \hline
+Yelp & 137154 & 15173 \tabularnewline
+Amazon (Full) & 6277889 & 7500 \tabularnewline
+Amazon (High activity) & 3246602 & 3900 \tabularnewline
+\hline
+\end{tabular}
+\caption{Train/test splits}
+\label{table:traintest}
+\end{table}
+
+We measure performance over the test sets using 
 root-mean-square error. The errors are normalized by dividing by 4, the maximum 
 difference between the highest and lowest star ratings possible. However, 
 in the interest of preserving granularity for model comparison, predicted
 fractional ratings are not rounded to the nearest integer before calculating 
 the errors. 
+
+It should be mentioned that the proportion of test items to train items for 
+the Yelp dataset is much higher than for the other two datasets. This is 
+because after switching datasets, we felt it was not necessary to test 10\% of 
+the dataset, especially when the Amazon graph was much larger. We felt that 
+7500 and 3900 test items for two Amazon datasets were sufficient, given that we 
+were now working with datasets that took much longer to test. 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Neighborhood-based model}
