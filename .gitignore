@@ -1,8 +1,15 @@
-data/*.*
+
+.DS_Store
 *.pyc
+*~
+.*.m
+
+data/*.*
+
 writeup/*.out
 writeup/*.aux
 writeup/*.log
 writeup/report.pdf
+
 matlab/*.txt
-*~
+
