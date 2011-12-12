@@ -16,8 +16,8 @@ test_data(:, 2) = test_data(:, 2) + 1;
 %% Intialize model parameters
 num_products = max(train_data(:, 1));
 num_users = max(train_data(:, 2));
-latent_size = 20; % k -- dimensionailty of new space
-lambda = 0.003; % regularization constant
+latent_size = 10; % k -- dimensionailty of new space
+lambda = 0.00001; % regularization constant
 
 % initialize parameters
 % normally distributed about sqrt(4 / latent_size)
