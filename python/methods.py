@@ -70,48 +70,43 @@ def item_approach(training_matrix, user_dict, product_dict, test_data, k=1):
     for it, line in enumerate(test_data):
         product_id, user_id, rating = line.strip().split('\t')[:3]
 
-        if user_id not in user_dict:
-            continue
+        prediction = 4.0
+        if user_id in user_dict and product_id in product_dict:
+            user_i = user_dict[user_id]
+            product_i = product_dict[product_id]
 
-        if product_id not in product_dict:
-            continue
+            user_row = training_matrix.getrow(user_i)
+            product_col = training_matrix.getcol(product_i)
 
-        user_i = user_dict[user_id]
-        product_i = product_dict[product_id]
+            knn = []
+            
+            for o_product in user_row:
+                if product_i == o_product:
+                    continue
 
-        user_row = training_matrix.getrow(user_i)
-        product_col = training_matrix.getcol(product_i)
+                # value = cosine_similarity(training_matrix, o_product, product_i, use_row=False, avoidKey=user_i)
 
-        knn = []
+                if (product_i, o_product) in product_edges:
+                    value = product_edges[(product_i, o_product)]
+                if (o_product, product_i) in product_edges:
+                    value = product_edges[(o_product, product_i)]
+                else:
+                    value = cosine_similarity(training_matrix, o_product, product_i, use_row=False)
+                    product_edges[(product_i, o_product)] = value
 
-        for o_product in user_row:
-            if product_i == o_product:
-                continue
+                if value > 0.0:
+                    heapq.heappush(knn, (o_product, value))
 
-            # value = cosine_similarity(training_matrix, o_product, product_i, use_row=False, avoidKey=user_i)
+            top_k = heapq.nlargest(k, knn, key=lambda x: x[1])
+            if len(top_k) > 0:
+                prediction = sum(training_matrix[user_i, i] for (i, rating) in top_k) / float(len(top_k))
 
-            if (product_i, o_product) in product_edges:
-                value = product_edges[(product_i, o_product)]
-            if (o_product, product_i) in product_edges:
-                value = product_edges[(o_product, product_i)]
-            else:
-                value = cosine_similarity(training_matrix, o_product, product_i, use_row=False)
-                product_edges[(product_i, o_product)] = value
-
-            if value > 0.0:
-                heapq.heappush(knn, (o_product, value))
-                    
-        top_k = heapq.nlargest(k, knn, key=lambda x: x[1])
-        prediction = sum(training_matrix[user_i, i] for (i, rating) in \
-                             top_k) / float(k)
-
-        if prediction > 0:
-            predicted_vals.append(prediction)
-            actual_val = float(rating)
-            actual_vals.append(actual_val)
-            square_diff = (prediction - actual_val) ** 2
-            error += square_diff
-            total += 1
+        predicted_vals.append(prediction)
+        actual_val = float(rating)
+        actual_vals.append(actual_val)
+        square_diff = (prediction - actual_val) ** 2
+        error += square_diff
+        total += 1
 
     error = sqrt(error / total) / (4.0)
     return (error, predicted_vals, actual_vals)
@@ -170,6 +165,9 @@ if __name__ == '__main__':
     train_file = 'data/train_matrix_7500.txt.gz'    
     test_file = 'data/test_matrix_7500.txt.gz'
 
+    # train_file = 'data/pruned_matrix_train.txt.gz'    
+    # test_file = 'data/pruned_matrix_test.txt.gz'
+
     use_gzip = False
 
     if use_gzip:
@@ -183,9 +181,9 @@ if __name__ == '__main__':
     matrix, user_dict, product_dict = create_user_product_matrix(train_data)
 
     ks = [1, 3, 5, 10, 25]
-    for i in ks:
-        error, predicted_vals, actual_vals = neighbourhood_approach(matrix, user_dict, product_dict, test_data, k=i)
-        print("Neighborhood approach, k = %i, error = %f" %(i, error)) 
+    # for i in ks:
+    #     error, predicted_vals, actual_vals = neighbourhood_approach(matrix, user_dict, product_dict, test_data, k=i)
+    #     print("Neighborhood approach, k = %i, error = %f" %(i, error)) 
     for i in ks:
         error, predicted_vals, actual_vals = item_approach(matrix, user_dict, product_dict, test_data, k=i)
         print("Item approach: k = %i, error = %f" %(i, error))

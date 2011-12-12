@@ -604,10 +604,6 @@ model is not the best choice to be used alone in a recommendation engine.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Item-based model}
 
-The item-based model did not perform as well as we had hoped.
-
-----INSERT ANALYSIS HERE.----
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Full Amazon dataset}
 The results of the item-based model on the full Amazon dataset 
@@ -619,11 +615,11 @@ are shown in Table~\ref{table:modeltwo_full} and Figure~\ref{fig:modeltwo_full}.
 \cline{2-2}
 
 \multicolumn{1}{c|}{}  & {Normalized RMSE} \tabularnewline \hline
-$k$ = 1 & 0.1499 \tabularnewline
-$k$ = 3 & 0.3477 \tabularnewline
-$k$ = 5 & 0.4513 \tabularnewline
-$k$ = 10 & 0.5871 \tabularnewline
-$k$ = 25 & 0.7391 \tabularnewline
+$k$ = 1 & 0.1972 \tabularnewline
+$k$ = 3 & 0.2099 \tabularnewline
+$k$ = 5 & 0.2185 \tabularnewline
+$k$ = 10 & 0.2284 \tabularnewline
+$k$ = 25 & 0.0.2339 \tabularnewline
 \hline
 Always predict 4 & 0.3211 \tabularnewline 
 Average of all other users & 0.3007 \tabularnewline
@@ -640,6 +636,12 @@ Average of all other users & 0.3007 \tabularnewline
 \label{fig:modeltwo_full}
 \end{figure}
 
+Compared to the neighborhood-based model, the item based model performs
+far better on the full dataset. Interestingly, the performance of the
+model decreases with higher values of k, though very slightly. Prior work
+has shown that item based models were specifically created for sparse
+datasets \cite{bib:amazon}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Amazon high-activity dataset}
 The results of the item-based model on the high activity Amazon dataset 
@@ -652,14 +654,14 @@ Figure~\ref{fig:modeltwo_subset}.
 \cline{2-2}
 
 \multicolumn{1}{c|}{}  & {Normalized RMSE} \tabularnewline \hline
-$k$ = 1 & 0.3638 \tabularnewline
-$k$ = 3 & 0.3365 \tabularnewline
-$k$ = 5 & 0.3493 \tabularnewline
-$k$ = 10 & 0.3879 \tabularnewline
-$k$ = 25 & 0.4668 \tabularnewline
+$k$ = 1 & 0.3636 \tabularnewline
+$k$ = 3 & 0.3172 \tabularnewline
+$k$ = 5 & 0.3083 \tabularnewline
+$k$ = 10 & 0.3024 \tabularnewline
+$k$ = 25 & 0.2967 \tabularnewline
 \hline
 Always predict 4 & 0.3049 \tabularnewline 
-Average of all other users & 0.2513 \tabularnewline
+Average of all other products & 0.2834 \tabularnewline
 \hline
 \end{tabular}
 \caption{Item-based model, high-activity dataset}
