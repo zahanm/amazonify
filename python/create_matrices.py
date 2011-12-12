@@ -148,5 +148,7 @@ def create_user_product_matrix(train_data):
 
     
 if __name__ == '__main__':
-    train_file = 'data/review_matrix.txt.gz'
-    #matrix, user_dict, product_dict = create_user_product_matrix(train_file)
+    train_file = 'data/pruned_matrix.txt'
+    train_data = open(train_file, 'rb').readlines()
+
+    matrix, user_dict, product_dict = create_user_product_matrix(train_data)
