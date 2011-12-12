@@ -238,36 +238,36 @@ instead of one
 For these reasons, we focus this paper mainly on discussions relating to the 
 Amazon dataset.
 
-%% \subsection{Amazon high activity dataset}
-%% The Amazon dataset improves on the Yelp dataset, but it is still fairly 
-%% sparse -- the median user has only 2 reviews. We wanted to experiment on a 
-%% denser dataset to see how density affects model performance. 
-%% As a result, we created a third dataset from a high-activity 
-%% subset of the full Amazon dataset. This dataset comprises all products and 
-%% users with a review count of 5 or higher. Though this subset does not reflect 
-%% the real world, it allows us to gain insight on the significance of the 
-%% sparsity problem. The characteristics of this dataset are listed in 
-%% Table~\ref{table:amazonstats_sub}.
+\subsection{Amazon high activity dataset}
+The Amazon dataset improves on the Yelp dataset, but it is still fairly 
+sparse -- the median user has only 2 reviews. We wanted to experiment on a 
+denser dataset to see how density affects model performance. 
+As a result, we created a third dataset from a high-activity 
+subset of the full Amazon dataset. This dataset comprises all products and 
+users with a review count of greater than 5. Though this subset does not 
+reflect the real world, it allows us to gain insight on the significance of the 
+sparsity problem. The characteristics of this dataset are listed in 
+Table~\ref{table:amazonstats_sub}.
 
-%% \begin{table}[htb]
-%% \centering
-%% \begin{tabular}{|c|c|}
-%% \hline
-%% Users & 548,507 \tabularnewline \hline
-%% Reviews & 3,250,502 \tabularnewline \hline
-%% Products & 1555166 \tabularnewline \hline
-%% Median reviews per user & 0
-%% \tabularnewline \hline
-%% Median reviews per product & 0
-%% \tabularnewline \hline
-%% Average rating given &Mean = 4.11, Median = 5 \tabularnewline
-%% in a review &STD = 1.24
-%% \tabularnewline \hline
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Users & 548,507 \tabularnewline \hline
+Reviews & 3,250,502 \tabularnewline \hline
+Products & 1555166 \tabularnewline \hline
+Median reviews per user & 14
+\tabularnewline \hline
+Median reviews per product & 9
+\tabularnewline \hline
+Average rating given &Mean = 4.11, Median = 5 \tabularnewline
+in a review &STD = 1.24
+\tabularnewline \hline
 
-%% \end{tabular}
-%% \caption{ High activity Amazon statistics }
-%% \label{table:amazonstats_sub}
-%% \end{table}
+\end{tabular}
+\caption{ High activity Amazon subset statistics }
+\label{table:amazonstats_sub}
+\end{table}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -410,7 +410,7 @@ the errors.
 \subsection{Neighborhood-based model}
 \subsubsection{Yelp dataset}
 Our first attempt at the neighborhood-based model is on the Yelp dataset. The 
-results are shown below:
+results are shown in Table \ref{table:modelone_yelp}:
 \begin{table}[htb]
 \centering
 \begin{tabular}{|c|c|}
@@ -427,6 +427,11 @@ results are shown below:
 All other users &1.0891 \tabularnewline
 Always predict 4 &1.2549
 \tabularnewline \hline
+
+\end{tabular}
+\caption{ Neighborhood-based CF Model Performance }
+\label{table:modelone_yelp}
+\end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Full Amazon dataset}
