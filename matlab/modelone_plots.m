@@ -2,7 +2,7 @@ k = [1, 3, 5, 10, 25];
 x = 0:k(end);
 
 %% Full set
-err_nbr = [0.149929, 0.347743, 0.451364, 0.587192, 0.73917];
+err_nbr = [0.1972, 0.2099, 0.2185, 0.2284, 0.2339];
 
 figure; hold on;
 plot(k, err_nbr, 'o-', 'markerfacecolor', 'b');
@@ -17,7 +17,7 @@ legend('Item-based model', 'Baseline: Predict 4 for all',...
 hold off;
 
 %% Pruned set
-err_nbr_pruned = [0.363856, 0.33652, 0.349313, 0.387983, 0.466819];
+err_nbr_pruned = [0.3636, 0.3172, 0.3083, 0.3024, 0.2967];
 
 figure; hold on;
 plot(k, err_nbr_pruned, 'o-', 'markerfacecolor', 'b');
