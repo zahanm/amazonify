@@ -547,6 +547,75 @@ Average of all other users & 0.2513 \tabularnewline
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Item-based model}
+
+The item-based model did not perform as well as we had hoped.
+
+----INSERT ANALYSIS HERE.----
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Full Amazon dataset}
+The results of the item-based model on the full Amazon dataset 
+are shown in Table~\ref{table:modeltwo_full} and Figure~\ref{fig:modeltwo_full}.
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|}
+\cline{2-2}
+
+\multicolumn{1}{c|}{}  & {Normalized RMSE} \tabularnewline \hline
+$k$ = 1 & 0.1499 \tabularnewline
+$k$ = 3 & 0.3477 \tabularnewline
+$k$ = 5 & 0.4513 \tabularnewline
+$k$ = 10 & 0.5871 \tabularnewline
+$k$ = 25 & 0.7391 \tabularnewline
+\hline
+Always predict 4 & 0.3211 \tabularnewline 
+Average of all other users & 0.3007 \tabularnewline
+
+\hline
+\end{tabular}
+\caption{Item-based model, full Amazon dataset}
+\label{table:modeltwo_full}
+\end{table}
+
+\begin{figure}[h]
+\includegraphics[scale=0.6]{images/modeltwo_full.pdf}
+\caption{Item-based model, full Amazon dataset}
+\label{fig:modeltwo_full}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Amazon high-activity dataset}
+The results of the item-based model on the high activity Amazon dataset 
+are shown in Table~\ref{table:modeltwo_subset} and 
+Figure~\ref{fig:modeltwo_subset}.
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|c|c|}
+\cline{2-2}
+
+\multicolumn{1}{c|}{}  & {Normalized RMSE} \tabularnewline \hline
+$k$ = 1 & 0.3638 \tabularnewline
+$k$ = 3 & 0.3365 \tabularnewline
+$k$ = 5 & 0.3493 \tabularnewline
+$k$ = 10 & 0.3879 \tabularnewline
+$k$ = 25 & 0.4668 \tabularnewline
+\hline
+Always predict 4 & 0.3049 \tabularnewline 
+Average of all other users & 0.2513 \tabularnewline
+\hline
+\end{tabular}
+\caption{Item-based model, high-activity dataset}
+\label{table:modeltwo_subset}
+\end{table}
+
+\begin{figure}[h]
+\includegraphics[scale=0.6]{images/modeltwo_subset.pdf}
+\caption{Item-based model, high-activity dataset}
+\label{fig:modeltwo_subset}
+\end{figure}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Matrix factorization}
